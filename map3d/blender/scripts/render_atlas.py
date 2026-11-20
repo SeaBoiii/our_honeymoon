@@ -65,7 +65,9 @@ def render_plate(name, slug, width, height, angle):
             bpy.data.worlds.remove(world)
 
 
-plates=[('HookerValley','valley',1320,900,(2.5,-7.5,4.1)),
+plates=[('Car','touring-suv',960,700,(-4.6,5.5,2.0)),
+        ('Sheep','merino',780,580,(-3.8,4.8,1.9)),
+        ('HookerValley','valley',1320,900,(2.5,-7.5,4.1)),
         ('StoneChurch','chapel',520,400,(-3.7,4,2.0)),
         ('Boat','cruise',520,400,(3.7,4.4,2.5)),
         ('Helicopter','helicopter',520,400,(4.5,3,2))]

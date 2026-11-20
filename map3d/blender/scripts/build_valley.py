@@ -34,7 +34,7 @@ def build_valley():
     def radius(a):
         return 1+.043*math.sin(3*a+.6)+.026*math.sin(7*a+1.3)+.013*math.cos(11*a)
 
-    sectors, rings = 96, 22
+    sectors, rings = 144, 32
     verts = [(0,0,ground(0,0))]
     for j in range(1,rings+1):
         for i in range(sectors):
@@ -108,6 +108,15 @@ def build_valley():
             x=cx+t*half
             k.bar((x,y,ground(x,y)-.05),(x,y,1.40),.055,'#72543a',8,'Portal')
             k.bar((x,y,1.37),(x+t*.46,y,ground(x+t*.46,y)),.014,'#574e40',6,'Backstay')
+    # Diamond wire infill and deck fasteners beneath the sculpted suspension cables.
+    for side in (-1,1):
+        y=by+side*.141
+        for i in range(28):
+            t=-1+2*i/28;u=t+2/28;x=cx+t*half;xx=cx+u*half
+            z=deck(t)+.037;zz=deck(u)+.037
+            k.bar((x,y,z),(xx,y,zz+.12),.004,'#58625a',5,'MeshWire')
+            k.bar((x,y,z+.12),(xx,y,zz),.004,'#58625a',5,'MeshWire')
+            k.cone((x,y-side*.025,z-.010),.008,.007,.009,'#66645c',n=8,label='DeckBolt')
     for t in (-1,1):
         k.cube((cx+t*half,by,1.395),(.11,.42,.11),'#ac8054','Lintel')
 

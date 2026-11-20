@@ -76,7 +76,7 @@ def main():
            'routes': {}}
     for key, wps in ROUTES.items():
         pts, dist, dur = fetch(wps)
-        simple = simplify(pts, 0.0008)
+        simple = simplify(pts, 0.000055)
         out['routes'][key] = {'km': round(dist/1000, 1), 'hours': round(dur/3600, 2), 'points': simple}
         print('%-16s %6.1f km %5.2f h  %5d -> %4d pts' % (key, dist/1000, dur/3600, len(pts), len(simple)))
         time.sleep(1.1)  # be polite to the demo server

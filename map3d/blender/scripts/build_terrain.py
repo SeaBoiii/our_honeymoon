@@ -112,6 +112,8 @@ def build_terrain():
         raise RuntimeError('Offline coastline is required: '+str(path))
     data=json.loads(path.read_text(encoding='utf-8'))
     lake_defs=[dict(lake,xy=clean_ring(lake['ring'])) for lake in data['lakes']]
+    for lake in lake_defs:
+        lake['holes']=[clean_ring(ring) for ring in lake.get('islands',[])]
     if len(lake_defs)!=8:
         raise RuntimeError('Expected all eight lake polygons in coastline.json')
     dem=DEMGrid.load(BLENDER_DIR/'data/dem_grid.json')
@@ -130,12 +132,12 @@ def build_terrain():
         coast=clean_ring(definition['ring'])
         main=name=='SouthIsland'
         hint=name=='NorthIslandHint'
-        step=.13 if main else (.23 if not hint else .65)
+        step=.096 if main else (.23 if not hint else .65)
         controls=[project(lon,lat) for _,lon,lat in SAMPLE_LOCATIONS] if main else []
         if not hint:
             rp=roads.points
             controls.extend(map(tuple,rp[inside(rp[:,0],rp[:,1],coast)]))
-        xy,faces=constrained_grid(coast,step,[l['xy'] for l in lake_defs] if main else [],controls)
+        xy,faces=constrained_grid(coast,step,[ring for l in lake_defs for ring in [l['xy'],*l['holes']]] if main else [],controls)
         x,y=xy[:,0],xy[:,1]
         if hint:
             h=np.full(len(x),65.)
@@ -163,12 +165,18 @@ def build_terrain():
     for lake in lake_defs:
         lr=lake['xy']
         # A fine flat lake grid improves route water-height rasterisation too.
-        xy,faces=constrained_grid(lr,.15)
+        xy,faces=constrained_grid(lr,.12,lake['holes'])
+        if lake['holes']:
+            centres=xy[np.asarray(faces)].mean(axis=1)
+            keep=np.ones(len(faces),dtype=bool)
+            for island in lake['holes']:
+                keep &= ~inside(centres[:,0],centres[:,1],island)
+            faces=[f for f,ok in zip(faces,keep) if ok]
         z=elevation_z(lake['elevation_m'])
         obj=mesh_object('Water_'+lake['name'],[(x,y,z) for x,y in xy],faces,col,lakes_root,'water')
         obj['surface_elevation_m']=lake['elevation_m']
     triangles,_,_=asset_stats(terrain)
-    if not 120_000<=triangles<=250_000:
+    if not 300_000<=triangles<=500_000:
         raise RuntimeError('Terrain triangle budget missed: %d; adjust grid step in build_terrain.py' % triangles)
     terrain['coastline_source']=data['provenance']['source']
     terrain['height_exaggeration']=HEIGHT_EXAGGERATION

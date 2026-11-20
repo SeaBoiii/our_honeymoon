@@ -25,16 +25,15 @@ objects; objects also linked elsewhere are preserved. A conflicting required
 object name outside the collection produces an error. Preview copies use
 linked mesh data, and remain separate from the exported asset hierarchies.
 
-`data/coastline.json` contains the Natural Earth coastline and lake rings, fitted
-to the recorded roads. `data/dem_grid.json` supplies the sampled LINZ elevations.
+`data/coastline.json` contains LINZ Topo50 mainland and lake boundaries with lake islands and small road shoulders, plus Natural Earth context. `data/dem_grid.json` supplies the sampled LINZ elevations.
 Geography uses the projection and vertical exaggeration in `ASSET_SPEC.md`.
 
-Terrain uses a 0.13-unit South Island constrained Delaunay grid with an Aoraki sample,
+Terrain uses a higher-density South Island constrained Delaunay grid with an Aoraki sample,
 lake-edge constraints, lowered beds and independent flat water meshes under
 `Lakes`. The coarse `NorthIslandHint` and `StewartIsland` are land children.
 The exporter omits terrain normals: the app's three.js r147 GLTFLoader enables
 flat shading for missing normals, keeping shared indexed positions/colours
-small enough for the 6 MB budget. No app changes are needed. All other assets
+compact at roughly 8.6 MB. All other assets
 include normal data. Runtime checks enforce file sizes, required exported node
 names, triangle counts, origin placement, height anchors, and no textures.
 
@@ -56,3 +55,8 @@ shader export, actual byte sizes, and visual results still require the live
 execution. Optional exporter keywords are retried without the specific
 rejected keyword. The final GLB validator deliberately stops if a fallback
 would compromise the terrain flat-shading/size contract.
+
+The five vehicles use shared representative length, width and height values in
+`atlas/vehicle-dimensions.json`. The exported GLBs are in metres. The website
+applies one common multiplier and changes the follow camera framing by vehicle.
+Run `node map3d/tools/verify_fleet.cjs` to measure the exported vertices.

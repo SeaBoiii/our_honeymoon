@@ -1,0 +1,10 @@
+{
+  "mapUnitsPerMetre": 0.00030,
+  "vehicles": {
+    "car":   {"asset":"car",        "label":"Touring SUV",       "length":4.82, "width":2.14, "height":1.70},
+    "coach": {"asset":"coach",      "label":"Touring coach",     "length":12.6, "width":2.9,  "height":3.55},
+    "heli":  {"asset":"helicopter", "label":"Glacier helicopter","length":12.9, "width":10.7, "height":3.45},
+    "boat":  {"asset":"boat",       "label":"Cruise boat",       "length":24,   "width":8.6,  "height":8.3},
+    "plane": {"asset":"plane",      "label":"Long-haul airliner","length":64,   "width":60,   "height":17}
+  }
+}

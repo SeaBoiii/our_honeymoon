@@ -28,13 +28,16 @@ def projected_points(lon, lat):
 
 def inside(x, y, ring):
     """Vectorised even/odd test; rings may be lists or NumPy arrays."""
-    ring = np.asarray(ring, dtype=float)
-    mask = np.zeros(np.broadcast_shapes(np.shape(x), np.shape(y)), dtype=bool)
-    for (ax, ay), (bx, by) in zip(ring, np.roll(ring, -1, axis=0)):
-        if abs(by-ay) < 1e-15:
-            continue
-        mask ^= ((ay > y) != (by > y)) & (x < ax+(y-ay)*(bx-ax)/(by-ay))
-    return mask
+    x,y=np.broadcast_arrays(x,y)
+    order=np.argsort(y,axis=None)
+    sy=y.ravel()[order];sx=x.ravel()[order]
+    ring=np.asarray(ring,dtype=float);mask=np.zeros(sy.size,dtype=bool)
+    for (ax,ay),(bx,by) in zip(ring,np.roll(ring,-1,axis=0)):
+        if ay==by:continue
+        lo,hi=np.searchsorted(sy,sorted((ay,by)))
+        mask[lo:hi]^=sx[lo:hi]<ax+(sy[lo:hi]-ay)*(bx-ax)/(by-ay)
+    result=np.empty_like(mask);result[order]=mask
+    return result.reshape(y.shape)
 
 
 def edge_distance(x, y, ring):
@@ -211,6 +214,8 @@ def carve_lake_beds(xy, metres, lakes):
         lo, hi = np.min(ring, axis=0)-1e-6, np.max(ring, axis=0)+1e-6
         ix = np.where((x >= lo[0]) & (x <= hi[0]) & (y >= lo[1]) & (y <= hi[1]))[0]
         submerged = inside(x[ix], y[ix], ring) | (edge_distance(x[ix], y[ix], ring) < 2e-6)
+        for island in lake.get('holes',[]):
+            submerged &= ~inside(x[ix],y[ix],island)
         ix = ix[submerged]
         h[ix] = np.minimum(h[ix], max(0, lake['elevation_m']-LAKE_BED_DEPTH_M))
     return h

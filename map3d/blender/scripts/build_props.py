@@ -70,7 +70,7 @@ def church(k):
 def observatory(k):
     k.cone((0,0,.035),.45,.45,.07,'rock',n=16,label='Platform')
     k.cone((0,0,.23),.31,.31,.37,'cream',n=16,label='DomeDrum')
-    k.ball((0,0,.415),(.34,.34,.33),'snow',n=16,rings=5,dome=True,label='ObservatoryDome')
+    k.ball((0,0,.415),(.34,.34,.33),'snow',n=48,rings=14,dome=True,label='ObservatoryDome')
     # A narrow dark strip follows the dome's meridian, suggesting an open slit.
     for i in range(7):
         a=(i+.5)*math.pi/14
@@ -114,7 +114,7 @@ def hot_tub(k):
 def mosque(k):
     k.cube((0,0,.025),(.90,.75,.05),'stone','Courtyard')
     k.cube((-.06,0,.25),(.58,.51,.45),'cream','PrayerHall')
-    k.ball((-.06,0,.475),(.27,.25,.25),'snow',n=16,rings=5,dome=True,label='Dome')
+    k.ball((-.06,0,.475),(.27,.25,.25),'snow',n=48,rings=14,dome=True,label='Dome')
     k.bar((-.06,0,.71),(-.06,0,.80),.012,'tussock')
     k.cone((.34,.15,.43),.075,.060,.81,'cream',n=10,label='Minaret')
     k.cone((.34,.15,.72),.095,.095,.045,'stone',n=10,label='Balcony')
@@ -187,14 +187,14 @@ def glacier(k):
     # into a ragged accumulation of snow on the uphill edge of each crown.
     import random
     rng=random.Random(420)
-    for row in range(7):
-        for col in range(5):
-            y=(row-3)*.162
-            x=(col-2)*.148*(.79+.21*math.cos(y*2.7))+.055*math.sin(y*4)
-            h=.14+row*.041+.09*math.sin(col*1.7+row*.7)+rng.uniform(0,.085)
+    for row in range(10):
+        for col in range(7):
+            y=(row-4.5)*.112
+            x=(col-3)*.111*(.79+.21*math.cos(y*2.7))+.055*math.sin(y*4)
+            h=.14+row*.030+.09*math.sin(col*1.7+row*.7)+rng.uniform(0,.085)
             angle=rng.uniform(-.24,.24)
-            outline=[(math.cos(i*math.tau/7+angle)*rng.uniform(.081,.095),
-                      math.sin(i*math.tau/7+angle)*rng.uniform(.092,.107)) for i in range(7)]
+            outline=[(math.cos(i*math.tau/7+angle)*rng.uniform(.061,.072),
+                      math.sin(i*math.tau/7+angle)*rng.uniform(.065,.083)) for i in range(7)]
             verts=[]
             for width,level,lean in ((.88,0,0),(1,.37,.006),(.92,.75,.019),(.73,1,.032)):
                 for dx,dy in outline:
@@ -254,10 +254,20 @@ BUILDERS=[('church_stone','StoneChurch',church),('observatory','Observatory',obs
           ('glacier_ice','GlacierIce',glacier),('pine_tree','PineTree',lambda k:tree(k,pine=True)),
           ('beech_tree','BeechTree',tree),('sheep','Sheep',sheep),('pin','Pin',pin)]
 
+exec(compile((PROJECT_ROOT / 'map3d/blender/scripts/build_wildlife.py').read_text(encoding='utf-8'), 'build_wildlife.py', 'exec'), globals())
+BUILDERS=[(file,name,{'pine_tree':alpine_pine,'beech_tree':beech,'sheep':merino}.get(file,builder)) for file,name,builder in BUILDERS]
+
+exec(compile((PROJECT_ROOT/'map3d/blender/scripts/landmark_details.py').read_text(encoding='utf8'),'landmark_details.py','exec'),globals())
+
 import bmesh
 for _file,_name,_builder in BUILDERS:
+    if globals().get('ONLY_ASSETS') and _file not in ONLY_ASSETS:
+        continue
     _kit=Kit(_name,reset_collection('HM_'+_name))
-    _builder(_kit)
+    if _file=='glowworm_cave':sculpt_grotto(_kit)
+    elif _file=='lone_tree':sculpt_willow(_kit)
+    else:_builder(_kit)
+    if _file in LANDMARK_DETAILS:LANDMARK_DETAILS[_file](_kit)
     for _obj in descendants(_kit.obj):
         if _obj.type=='MESH':
             _bm=bmesh.new(); _bm.from_mesh(_obj.data)

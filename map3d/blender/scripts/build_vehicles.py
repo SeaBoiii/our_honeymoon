@@ -31,46 +31,7 @@ def road_proportions(k, width_factor, height_factor):
         obj.location=stretch.to_3x3() @ obj.location
 
 
-def build_car():
-    k=Kit('Car',reset_collection('HM_Car'))
-    # Cross sections define the rising bonnet, raked windscreen and rear hatch.
-    def shell(stations, paint, name):
-        vertices=[]
-        for y,w,bottom,top in stations:
-            shoulder=top-(top-bottom)*.18
-            vertices.extend([(u*w,y,h) for u,h in ((-.89,bottom),(-1,bottom+.07),
-                (-1,shoulder),(-.84,top),(.84,top),(1,shoulder),(1,bottom+.07),(.89,bottom))])
-        faces=[tuple(range(7,-1,-1)),tuple(range(len(vertices)-8,len(vertices)))]
-        for start in range(0,len(vertices)-8,8):
-            faces.extend((start+i,start+(i+1)%8,start+(i+1)%8+8,start+i+8) for i in range(8))
-        body=k.mesh(vertices,faces,paint,name)
-        bm=bmesh.new(); bm.from_mesh(body.data)
-        bmesh.ops.recalc_face_normals(bm,faces=list(bm.faces))
-        bm.to_mesh(body.data); bm.free()
-    shell([(-1.84,.82,.41,.79),(-1.6,.96,.34,.93),(-.8,.97,.33,1.01),
-           (.62,.96,.33,.99),(1.55,.92,.36,.87),(1.84,.82,.42,.78)],'red','BodyShell')
-    shell([(-1.45,.78,.90,1.02),(-1.14,.79,.91,1.46),(-.83,.80,.91,1.52),
-           (.29,.78,.92,1.51),(.93,.78,.90,1.00)],'glass','PanoramicGlazing')
-    k.cube((0,-.33,1.51),(1.39,1.40,.075),'red','Roof')
-    for x in (-.837,.837):
-        k.bar((x*.96,-.38,.97),(x*.94,-.38,1.47),.032,'road',label='Pillar')
-        k.cube((x*1.16,0,.42),(.045,2.1,.095),'road','Sill')
-        for y in (-.7,.55):
-            k.cube((x*1.025,y,.88),(.045,.25,.035),'road','Handle')
-        k.cube((x*1.17,.72,1.12),(.22,.20,.13),'red','Mirror')
-    for x in (-.65,.65):
-        k.cube((x,1.838,.72),(.38,.035,.18),'snow','Headlamp')
-        k.cube((x,-1.838,.75),(.30,.035,.17),'red','TailLamp')
-    k.cube((0,1.846,.54),(.82,.035,.16),'road','Grille')
-    k.cube((0,-1.84,.40),(1.65,.08,.14),'road','Bumper')
-    wheels(k,[-1.14,1.15],1.87,.37)
-    for y in (-.85,.45):
-        k.cube((0,y,1.56),(1.55,.11,.10),'road','RoofRack')
-    for x in (-.35,.35):
-        k.cube((x,-.06,1.67),(.13,2.75,.055),'snow','Ski')
-        k.cube((x,.07,1.73),(.14,.25,.10),'road','Binding')
-    road_proportions(k,.83,.95)
-    return k.finish('car',True)
+exec(compile((PROJECT_ROOT / 'map3d/blender/scripts/build_suv.py').read_text(encoding='utf-8'), 'build_suv.py', 'exec'), globals())
 
 
 def build_coach():
@@ -264,5 +225,6 @@ def build_plane():
 
 
 for _builder in (build_car,build_coach,build_helicopter,build_boat,build_plane):
-    _builder()
-print('[vehicles] Finished 5 assets; +Y forward, bottom-centre roots, 4.5-unit length.')
+    if not globals().get('ONLY_ASSETS') or _builder.__name__[6:] in ONLY_ASSETS:
+        _builder()
+print('[vehicles] Finished 5 assets; +Y forward, bottom-centre roots, shared metre dimensions.')

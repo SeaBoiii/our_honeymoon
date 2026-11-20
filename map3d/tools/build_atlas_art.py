@@ -11,6 +11,10 @@ for name in ('valley','chapel','cruise','helicopter'):
     plate = root/'map3d/preview/plates'/(name+'.png')
     Image.open(plate).save(art/(name+'.webp'), quality=90, method=4)
 
+for name, source in [('suv','touring-suv'),('merino','merino')]:
+    image=Image.open(root/'map3d/preview/plates'/(source+'.png')).convert('RGBA')
+    image.thumbnail((720,560));image.save(art/(name+'.webp'),quality=88,method=6)
+
 dem = json.loads((root/'map3d/blender/data/dem_grid.json').read_text(encoding='utf8'))
 grid = np.array(dem['elev'], dtype=float).reshape(dem['nlat'], dem['nlon'])
 # One patch of the Southern Alps, oriented north-up. Isolines at 120 m.

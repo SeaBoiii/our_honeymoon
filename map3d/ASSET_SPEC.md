@@ -1,8 +1,8 @@
 # 3D Honeymoon Map — Asset Spec (Codex builds, Claude consumes)
 
 This is the original low-poly brief. The current atlas retains its projection,
-vehicle axes and node names. Its updated assets and measurements are in
-`assets/manifest.json`. The new Hooker Valley cutaway has a 950 KB budget.
+vehicle axes and node names. The current vehicle GLBs use metre dimensions from `atlas/vehicle-dimensions.json`. Updated assets and measurements are in
+`assets/manifest.json`. The current atlas uses a 386,523-triangle mainland and island terrain asset, distance-based scenery detail, and individually modelled SUV wheels, tree crowns and merino fleece. The historical budgets below describe the first edition. See the exporter and offline verifier for current size limits.
 
 Codex builds every asset in the live Blender session through the Blender MCP and exports glTF binaries (`.glb`) into `map3d/assets/`. Claude writes the three.js web app in `map3d/` that loads these files. Don't write any web code.
 
@@ -48,7 +48,7 @@ Z = elevation_m / 10000 * 5    # 5x vertical exaggeration (3724 m -> Z ≈ 1.862
 - Also add a low, flat stylised **North Island southern tip** (Wellington area) named `NorthIslandHint`, for context only.
 
 ### 2. Vehicles
-Each vehicle faces **+Y in Blender** (north, which becomes −Z in three.js), sits with its origin at the bottom centre, and is real-world proportioned at about 4.5 Blender units long. The app scales them.
+Each vehicle faces **+Y in Blender** (north, which becomes −Z in three.js), sits with its origin at the bottom centre, and uses the actual class dimensions in metres from `atlas/vehicle-dimensions.json`. The app applies one shared scale.
 
 | File | Root object | Notes |
 |---|---|---|

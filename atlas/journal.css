@@ -85,3 +85,14 @@ main section+section{margin-top:54px}
  .plate-caption b{font-size:1.45rem}.trip-stat b{font-size:1.56rem}.trip-stat span{font-size:.68rem}
  .grid2{grid-template-columns:minmax(0,1fr)}.route-stops{column-gap:8px}
 }
+
+@media(min-width:1050px){
+  .plates{grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+  .plate img{height:130px}
+  .plate-caption{padding:6px 14px 15px}
+  .plate-caption b{font-size:1.4rem}
+  .plate-caption::after{display:none}
+}
+.plate:nth-child(4){background:#cde4e6}.plate:nth-child(5){background:#e9dfc8}
+
+.fleet-link{display:inline-block;margin:0 0 14px;color:var(--pine,#245b4d)}
