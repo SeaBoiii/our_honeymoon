@@ -147,7 +147,7 @@ def main():
     point_count = 0
     for name, ring in coasts.items():
         main_island, hint = name == 'SouthIsland', name == 'NorthIslandHint'
-        step = .15 if main_island else (.65 if hint else .23)
+        step = .13 if main_island else (.65 if hint else .23)
         lo, hi = np.min(ring, axis=0), np.max(ring, axis=0)
         xx, yy = np.meshgrid(np.arange(lo[0]+step*.47, hi[0], step), np.arange(lo[1]+step*.41, hi[1], step))
         xy = np.column_stack((xx.ravel(), yy.ravel()))

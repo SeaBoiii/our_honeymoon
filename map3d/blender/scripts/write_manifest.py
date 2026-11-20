@@ -45,7 +45,7 @@ def validate_glb(path, terrain=False):
             children=nodes[indices['Helicopter']].get('children',[])
             if any(indices[n] not in children for n in ('Rotor','TailRotor')):
                 raise RuntimeError('Export must preserve direct Rotor/TailRotor children')
-    limit=6_000_000 if terrain else 300_000
+    limit=6_000_000 if terrain else (950_000 if path.stem=='hooker_valley' else 300_000)
     if len(blob)>=limit:
         raise RuntimeError('Export size budget exceeded: '+path.name)
 
@@ -154,7 +154,7 @@ def render_previews():
     studio_camera(scene,col,(0,0,.2),(-4,-9,14),12.0)
     scene.render.filepath=str(directory/'props_lineup.png')
     bpy.ops.render.render(write_still=True,scene=scene.name)
-    print('[preview] Wrote props_lineup.png (all 18 props and vehicles)')
+    print('[preview] Wrote props_lineup.png (%d miniatures)' % len(entries))
 
 
 def write_manifest():
@@ -175,6 +175,8 @@ def write_manifest():
     manifest.write_text(json.dumps(entries,indent=2)+'\n',encoding='utf-8')
     if globals().get('RENDER_PREVIEWS',True):
         render_previews()
+    if not globals().get('SAVE_BLEND',True):
+        return
     object_mode()
     # Keep a previous .blend outside these directories from being backed up
     # implicitly by Blender. Existing user scenes remain part of this snapshot.

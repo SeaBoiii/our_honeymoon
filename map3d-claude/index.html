@@ -1,6 +1,6 @@
 <title>Honeymoon Vlog Claude Cut</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="../atlas/type.css">
 <style>
 /* Layout: full-bleed WebGL (globe for the flights, South Island diorama for the trip). Vlog layer on top: REC stamp, chapter cards, subtitles, letterbox. Day list docked left, transport bar bottom. */
 :root{
@@ -99,6 +99,7 @@ body.rolling #rec i{opacity:1;animation:blink 1.2s steps(2) infinite}
 }
 @media (prefers-reduced-motion:reduce){body.rolling #rec i{animation:none}#chapter,.lb{transition:none}}
 </style>
+<link rel="stylesheet" href="../atlas/map.css">
 
 <div id="app">
   <canvas id="c" aria-label="3D travel map: Singapore to Christchurch and the South Island honeymoon route"></canvas>
@@ -110,7 +111,7 @@ body.rolling #rec i{opacity:1;animation:blink 1.2s steps(2) infinite}
 
   <aside id="side" class="glass" data-open="false">
     <header>
-      <div><span class="sub">24 Aug – 7 Sep 2027 · Claude cut</span><h1>The South Island loop</h1><a class="itin" href="https://claude.ai/artifact/U9TV22y5gkKzKZtULwJ8xp" target="_blank" rel="noopener">Full itinerary and hotels ↗</a></div>
+      <div><span class="sub">24 Aug – 7 Sep 2027 · Claude cut</span><h1>The South Island loop</h1><a class="itin" href="https://claude.ai/artifact/U9TV22y5gkKzKZtULwJ8xp" target="_blank" rel="noopener">← Itinerary and stays</a></div>
       <button class="btn" id="toggle" aria-expanded="false" aria-controls="days">Days</button>
     </header>
     <ol id="days"></ol>
@@ -135,17 +136,24 @@ body.rolling #rec i{opacity:1;animation:blink 1.2s steps(2) infinite}
     <button class="btn" id="follow" aria-pressed="true">Follow</button>
     <button class="btn" id="overview">Map</button>
   </div>
-  <div id="status" class="glass">Loading the map…</div>
+  <div id="status" role="status" class="glass">Loading the map…</div>
+  <noscript><p class="glass" style="position:absolute;inset:25% 10% auto;padding:20px;z-index:8">Enable JavaScript to explore the map, or <a href="https://claude.ai/artifact/U9TV22y5gkKzKZtULwJ8xp">read the itinerary</a>.</p></noscript>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/GLTFLoader.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="../atlas/three-r147/three.min.js"></script>
+<script src="../atlas/three-r147/GLTFLoader.js"></script>
+<script src="../atlas/three-r147/OrbitControls.js"></script>
 <script>
 (function(){
 'use strict';
 const $=id=>document.getElementById(id);
 // ---------- shared projection for the South Island diorama (matches map3d/ASSET_SPEC.md) ----------
+function mapUnavailable(){
+  $('status').hidden=false;
+  $('status').innerHTML='This map needs WebGL. <a href="https://claude.ai/artifact/U9TV22y5gkKzKZtULwJ8xp">Open the illustrated itinerary</a>.';
+  $('chapter').classList.remove('show');
+}
+if(!window.THREE){mapUnavailable();return;}
 const KX=8.008, KY=11.132;
 const P=(lat,lon)=>({x:(lon-170.5)*KX, z:-(lat+44)*KY});
 const rev=a=>a.slice().reverse();
@@ -223,7 +231,9 @@ const MODE={car:{c:'#c8432f',v:3.6,name:'Drive',len:.42},coach:{c:'#e0a030',v:3.
 
 // ---------- renderer, two scenes ----------
 const canvas=$('c');
-const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+let renderer;
+try{renderer=new THREE.WebGLRenderer({canvas,antialias:true});}
+catch(error){mapUnavailable();return;}
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.outputEncoding=THREE.sRGBEncoding;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;
@@ -312,6 +322,7 @@ const load=n=>fetch('web_assets/'+n+'.json').then(r=>{if(!r.ok)throw 0;return r.
   const bin=atob(j.data),buf=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);
   return new Promise(res=>loader.parse(buf.buffer,'',g=>res(g.scene),()=>res(null)));}).catch(()=>null);
 function fit(obj,size,fallbackColor){
+  if(obj)obj=obj.clone(true);
   if(!obj){const m=new THREE.Mesh(new THREE.BoxGeometry(.5,.35,1),new THREE.MeshStandardMaterial({color:fallbackColor||'#999'}));m.position.y=.175;obj=new THREE.Group();obj.add(m);}
   const box=new THREE.Box3().setFromObject(obj),s=new THREE.Vector3(),c=new THREE.Vector3();box.getSize(s);box.getCenter(c);
   const k=size/Math.max(s.x,s.y,s.z,1e-6);obj.scale.multiplyScalar(k);obj.position.set(-c.x*k,-box.min.y*k,-c.z*k);
@@ -472,7 +483,7 @@ function frame(){
     if(li!==curLeg){curLeg=li;legChangeT=0;$('leg').textContent=MODE[L.mode].name+(L.km?' · '+L.km+' km':'');$('sub').textContent=L.cap;$('sub').classList.add('on');$('stamp').textContent=stampFor(L);setWorld(L.world);}
     legChangeT+=dt;showDay(L.day);
     // dip to black around globe <-> island cuts
-    legs.forEach((M,i)=>{if(i&&M.world!==legs[i-1].world){const d=Math.abs(t-M.start);if(d<.6)fade=Math.max(fade,1-d/.6);}});
+    legs.forEach((M,i)=>{if(i&&M.world!==legs[i-1].world){const d=Math.abs(t-M.start);if(playing&&d<.6)fade=Math.max(fade,1-d/.6);}});
     let target;const u=Math.min(1,(t-L.start)/L.dur);
     if(/stay/.test(L.mode)){target=L.at;}
     else{

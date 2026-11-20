@@ -88,12 +88,15 @@ def terrain_colors(obj, xy, z, west):
     for i in range(3):
         np.maximum.at(slope,tri[:,i],steep/HEIGHT_EXAGGERATION)
     h=z/HEIGHT_SCALE
-    colors=np.tile(rgba('pasture'),(len(xy),1))
-    colors[(~west)&(h>400)]=rgba('tussock')
-    colors[west&(h<900)]=rgba('beech')
-    colors[(h>=900)&(slope>.7)]=rgba('rock')
-    colors[(h>=1300)&(slope<1.3)]=rgba('snow')
-    colors[(h>=1100)&(slope>=.15)&(slope<.7)]=rgba('snow')
+    colors=np.tile(rgba('#789b72'),(len(xy),1))
+    def glaze(color, amount):
+        weight=np.clip(amount,0.,1.)[:,None]
+        colors[:]=colors*(1-weight)+np.asarray(rgba(color))*weight
+    glaze('#c3ae74',(~west)*np.clip((h-240)/440,0,1))
+    glaze('#3b6e56',west*np.clip((1160-h)/310,0,1))
+    glaze('#798990',np.maximum((h-830)/480,(slope-.40)/.65)*np.clip((h-540)/330,0,1))
+    snowline=np.where((slope>=.15)&(slope<.7),1060.,1220.)
+    glaze('#eff4ed',np.clip((h-snowline)/190,0,1)*np.clip((1.48-slope)/.3,0,1))
     attr=mesh.color_attributes.new(name='Color',type='BYTE_COLOR',domain='POINT')
     attr.data.foreach_set('color',colors.astype(np.float32).ravel())
     mesh.color_attributes.active_color_index=len(mesh.color_attributes)-1
@@ -127,8 +130,7 @@ def build_terrain():
         coast=clean_ring(definition['ring'])
         main=name=='SouthIsland'
         hint=name=='NorthIslandHint'
-        # Base land contributes about 133k triangles, plus road controls.
-        step=.15 if main else (.23 if not hint else .65)
+        step=.13 if main else (.23 if not hint else .65)
         controls=[project(lon,lat) for _,lon,lat in SAMPLE_LOCATIONS] if main else []
         if not hint:
             rp=roads.points

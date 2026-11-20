@@ -15,6 +15,7 @@ wrap() { # $1 source page, $2 output, $3 path prefix back to the summary
   {
     printf '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
     printf '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n'
+    printf '<link rel="icon" type="image/webp" href="%satlas/valley.webp">\n' "$3"
     printf '<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui}img{max-width:100%%}[hidden]{display:none!important}</style>\n'
     sed -e "s#$CODEX3D\##${3}3d/\##g" -e "s#$CODEX3D#${3}3d/#g" \
         -e "s#$CLAUDE3D\##${3}claude-cut/\##g" -e "s#$CLAUDE3D#${3}claude-cut/#g" \
@@ -25,12 +26,13 @@ wrap() { # $1 source page, $2 output, $3 path prefix back to the summary
 }
 
 rm -rf docs
-mkdir -p docs/3d/web_assets docs/claude-cut/web_assets
+mkdir -p docs/3d/web_assets docs/claude-cut/web_assets docs/atlas
 wrap honeymoon.html docs/index.html ''
 wrap map3d/index.html docs/3d/index.html '../'
 wrap map3d-claude/index.html docs/claude-cut/index.html '../'
 cp map3d/web_assets/* docs/3d/web_assets/
 cp map3d-claude/web_assets/* docs/claude-cut/web_assets/
+cp -R atlas/. docs/atlas/
 touch docs/.nojekyll
 # no artifact links may survive
 if grep -rl 'claude.ai/artifact' docs/*.html docs/*/index.html; then echo 'artifact link left in site' >&2; exit 1; fi

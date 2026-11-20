@@ -1,6 +1,7 @@
 <title>South Island Honeymoon</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<meta name="description" content="Explore a fourteen-day South Island honeymoon in a 3D travel atlas, with daily routes, stays and meals.">
+<link rel="stylesheet" href="atlas/type.css">
 <style>
 /* Layout: a night-sky hero (same world as the 3D vlog) with the real-road route map, then a single reading column of day cards (do · eat · sleep), then reference blocks. */
 :root{
@@ -30,24 +31,6 @@ a{color:var(--lake)}
 a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--lake);outline-offset:2px}
 .eyebrow{font:500 .74rem/1.2 var(--mono);letter-spacing:.12em;text-transform:uppercase}
 
-/* hero: the night sky of the vlog, same in both themes by design */
-.hero{background:radial-gradient(1200px 500px at 70% -10%,#1d3a5a 0%,var(--night) 60%),var(--night);color:var(--star);position:relative;overflow:hidden}
-.hero::before{content:"";position:absolute;inset:0;background-image:radial-gradient(1px 1px at 12% 22%,#fff8 50%,transparent 51%),radial-gradient(1px 1px at 33% 64%,#fff6 50%,transparent 51%),radial-gradient(1.4px 1.4px at 58% 12%,#fff9 50%,transparent 51%),radial-gradient(1px 1px at 81% 40%,#fff7 50%,transparent 51%),radial-gradient(1.2px 1.2px at 91% 78%,#fff6 50%,transparent 51%),radial-gradient(1px 1px at 47% 88%,#fff5 50%,transparent 51%),radial-gradient(1px 1px at 22% 82%,#fff6 50%,transparent 51%);pointer-events:none}
-.hero .wrap{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:28px;align-items:center;padding-block:44px 40px;position:relative}
-.hero .eyebrow{color:#7fd3da}
-.rec{display:inline-flex;gap:8px;align-items:center;font:500 .72rem/1 var(--mono);letter-spacing:.08em;color:#fff;background:rgba(0,0,0,.35);padding:6px 10px;border-radius:999px;width:max-content;max-width:100%}
-.rec i{width:8px;height:8px;border-radius:50%;background:#ff3b30;box-shadow:0 0 8px #ff3b30}
-.hero h1{font-size:clamp(2.4rem,6.5vw,4.2rem);font-weight:800;letter-spacing:-.02em;color:#fff;margin:14px 0 12px}
-.hero .lede{color:#b9c9cf;max-width:52ch}
-.cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
-.btn{display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-weight:700;font-size:.92rem;padding:11px 16px;border-radius:12px}
-.btn.primary{background:#ef6a55;color:#fff}
-.btn.ghost{background:rgba(255,255,255,.08);color:#e3ecee;border:1px solid rgba(255,255,255,.18)}
-.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:26px}
-.stat{border-top:1px solid rgba(255,255,255,.16);padding-top:8px}
-.stat b{display:block;font:800 1.5rem/1.1 var(--display);color:#fff;font-variant-numeric:tabular-nums}
-.stat span{font:500 .68rem/1.3 var(--mono);color:#9fb6bd;text-transform:uppercase;letter-spacing:.08em}
-.mapcard{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:10px;min-width:0}
 .routemap{width:100%;height:auto;display:block;max-height:560px}
 .routemap .land{fill:#e2d6b6;stroke:#b8a77e;stroke-width:1.2}
 .routemap .lake{fill:#3fb8c4}
@@ -123,26 +106,40 @@ footer{border-top:1px solid var(--line);padding-block:20px 40px;font-size:.8rem;
   .rail .date{font-size:1.4rem}
 }
 </style>
+<link rel="stylesheet" href="atlas/journal.css">
 
-<header class="hero">
-  <div class="wrap">
-    <div>
-      <span class="rec"><i></i>REC · 24 AUG – 7 SEP 2027 · SIN ⇄ CHC</span>
-      <h1>South Island Honeymoon</h1>
-      <p class="lede">Fourteen days from Singapore to Aotearoa and back: a self-drive loop through the Mackenzie stars, the Southern Lakes, Fiordland and the wild West Coast. Every day lists what to do, where to eat halal, and where we sleep.</p>
-      <div class="cta">
-        <a class="btn primary" href="https://claude.ai/artifact/ByqvjSzbFcSGSWeyZomBoV" target="_blank" rel="noopener">▶ Watch the trip in 3D</a>
-        <a class="btn ghost" href="https://claude.ai/artifact/Rt9SjT2ckTEaW6AEVvWGua" target="_blank" rel="noopener">▶ Claude cut (3D)</a>
-        <a class="btn ghost" href="#days">Day by day ↓</a>
-      </div>
-      <div class="stats">
-        <div class="stat"><b>13</b><span>nights in NZ</span></div>
-        <div class="stat"><b>2,082</b><span>km self-drive</span></div>
-        <div class="stat"><b>9</b><span>stays, all but 1 with a kitchen</span></div>
-        <div class="stat"><b>~$5–7k</b><span>NZD stays, est.</span></div>
-      </div>
-    </div>
-    <figure class="mapcard" style="margin:0">
+<header class="mast">
+  <div class="wrap"><a class="brand" href="#top"><span class="brand-mark" aria-hidden="true"></span>Honeymoon Atlas</a>
+    <nav aria-label="Trip navigation"><a href="#route">The route</a><a href="#days">Day by day</a><a href="#stays-h">Stays</a><a class="map-nav" href="https://claude.ai/artifact/ByqvjSzbFcSGSWeyZomBoV">3D map ↗</a></nav>
+  </div>
+</header>
+<div class="cover" id="top"><div class="wrap cover-inner">
+  <div class="cover-copy">
+    <span class="trip-date">24 August – 7 September 2027</span>
+    <h1>South Island <span>Honeymoon</span></h1>
+    <p>From Singapore to the Southern Alps. Fourteen days of lake roads, glacial valleys and starry nights in Aotearoa.</p>
+    <div class="cover-actions"><a class="atlas-btn" href="https://claude.ai/artifact/ByqvjSzbFcSGSWeyZomBoV">Explore the 3D map <span aria-hidden="true">↗</span></a><a class="text-link" href="#days">Day by day ↓</a></div>
+  </div>
+  <a class="cover-plate" href="https://claude.ai/artifact/ByqvjSzbFcSGSWeyZomBoV#place-valley" aria-label="Explore the Hooker Valley miniature in 3D">
+    <img src="atlas/valley.webp" width="1320" height="900" style="height:auto" alt="A cutaway of snowy alpine peaks, a turquoise river and a timber swing bridge">
+    <span class="plate-no">Hooker Valley &nbsp; / &nbsp; Aoraki, New Zealand ↗</span>
+  </a>
+</div></div>
+<div class="trip-strip"><div class="wrap">
+  <div class="trip-stat"><b>14</b><span>days in New Zealand</span></div><div class="trip-stat"><b>13</b><span>nights on the island</span></div>
+  <div class="trip-stat"><b>2,082</b><span>kilometres by car</span></div><div class="trip-stat"><b>9</b><span>places to stay</span></div>
+</div></div>
+<main class="wrap">
+<section aria-labelledby="places-h"><h2 id="places-h">Places along the way</h2>
+  <div class="plates"><a class="plate" href="https://claude.ai/artifact/ByqvjSzbFcSGSWeyZomBoV#place-chapel"><img src="atlas/chapel.webp" width="520" height="400" alt="" loading="lazy">
+     <span class="plate-caption"><span class="place-meta">Day 2 · Lake Tekapo</span><b>The stone chapel</b></span></a><a class="plate" href="https://claude.ai/artifact/ByqvjSzbFcSGSWeyZomBoV#place-cruise"><img src="atlas/cruise.webp" width="520" height="400" alt="" loading="lazy">
+     <span class="plate-caption"><span class="place-meta">Day 6 · Milford Sound</span><b>Into the fiord</b></span></a><a class="plate" href="https://claude.ai/artifact/ByqvjSzbFcSGSWeyZomBoV#place-helicopter"><img src="atlas/helicopter.webp" width="520" height="400" alt="" loading="lazy">
+     <span class="plate-caption"><span class="place-meta">Day 11 · Franz Josef</span><b>Above the glacier</b></span></a></div></section>
+<section id="route" class="route-spread" aria-labelledby="route-h"><div>
+  <h2 id="route-h">The island loop</h2>
+  <p>From Christchurch, follow the lakes south to Fiordland, then return through glacier country and Arthur’s Pass.</p>
+  <ol class="route-stops"><li><a href="#trip-day-1">Christchurch</a></li><li><a href="#trip-day-2">Lake Tekapo</a></li><li><a href="#trip-day-3">Aoraki / Mt Cook</a></li><li><a href="#trip-day-4">Wānaka</a></li><li><a href="#trip-day-5">Te Anau</a></li><li><a href="#trip-day-6">Milford Sound</a></li><li><a href="#trip-day-7">Queenstown</a></li><li><a href="#trip-day-10">Franz Josef</a></li><li><a href="#trip-day-13">Akaroa</a></li></ol><details class="route-notes"><summary>Why this route?</summary><p><b>Yes. Keep the route and all 13 nights.</b> Codex compared every stop with the classic alternatives: Pukaki/Twizel stargazing cabins, The Hermitage, a second Wānaka night, a Milford overnight cruise, Glenorchy lodges, Hokitika, Kaikōura, Hanmer Springs and an Akaroa overnight. This loop has the best late-winter scenery and still leaves room to retry Milford and the heli-hike if the weather turns. The one weak spot is four one-night stops at the start. A second night in Wānaka is only worth it if we drop Akaroa.</p></details>
+  <a href="https://claude.ai/artifact/Rt9SjT2ckTEaW6AEVvWGua">Watch the alternate 3D cut ↗</a></div><figure class="mapcard" style="margin:0">
       <svg viewBox="0 0 551 662" role="img" aria-labelledby="mapT" class="routemap">
 <title id="mapT">Route map: the honeymoon loop on New Zealand's South Island</title>
 <path class="land" d="M186.2 594.4 L179.0 592.0 L176.3 591.7 L175.3 589.7 L174.9 588.4 L174.3 586.1 L173.9 584.1 L167.8 583.8 L166.1 584.1 L164.4 584.4 L161.3 584.8 L163.0 583.8 L162.7 581.8 L157.6 581.8 L159.3 584.1 L158.6 585.4 L156.6 587.7 L153.2 587.4 L149.4 587.1 L145.7 584.8 L149.4 584.1 L151.1 585.8 L154.2 585.1 L151.1 582.8 L142.6 581.5 L139.9 582.1 L142.3 587.1 L142.6 588.4 L138.5 585.1 L137.2 584.4 L136.8 582.8 L135.1 582.1 L134.4 580.5 L134.1 579.8 L136.8 579.1 L137.5 580.5 L142.3 577.1 L142.6 575.8 L142.3 572.8 L140.9 569.2 L138.9 569.5 L139.2 573.2 L136.5 575.2 L134.4 569.9 L131.0 563.9 L128.0 561.9 L120.1 562.9 L119.5 564.9 L119.8 565.9 L116.4 564.6 L112.3 564.6 L109.6 566.9 L105.8 567.2 L103.5 565.2 L101.8 563.2 L100.1 559.3 L101.4 558.3 L96.3 550.7 L95.3 547.7 L91.2 547.0 L79.0 543.7 L77.9 546.7 L76.9 549.0 L76.6 551.0 L75.2 553.6 L68.1 555.6 L63.3 554.3 L59.6 555.6 L57.9 554.3 L53.8 552.3 L45.6 551.0 L35.1 551.0 L28.2 548.3 L25.5 544.7 L27.9 543.0 L33.0 537.1 L38.1 529.1 L42.9 526.1 L44.6 524.8 L42.9 524.5 L34.4 528.8 L33.0 531.1 L33.0 531.8 L30.6 536.1 L30.3 536.1 L29.6 533.1 L28.6 535.7 L27.2 536.4 L22.1 537.7 L21.8 535.1 L23.1 535.1 L23.5 534.1 L23.8 531.8 L24.5 529.8 L28.2 527.1 L32.7 526.1 L34.4 523.8 L29.9 525.2 L27.2 524.5 L27.9 521.8 L31.3 517.5 L27.6 518.5 L25.2 521.8 L23.1 525.8 L19.4 527.5 L17.0 528.1 L13.3 530.8 L11.9 529.5 L11.6 524.2 L11.9 513.9 L13.6 511.6 L15.7 511.2 L21.4 511.9 L23.5 511.2 L30.3 510.6 L40.2 508.9 L46.6 504.6 L49.0 501.6 L46.3 502.3 L34.4 503.6 L33.7 500.3 L38.8 498.0 L39.8 496.7 L38.5 497.0 L34.0 497.7 L32.3 496.7 L32.0 495.0 L32.3 493.0 L36.1 490.7 L40.8 488.7 L44.9 489.7 L47.0 490.0 L48.3 488.1 L44.6 487.1 L51.1 484.1 L51.4 483.1 L50.7 481.8 L47.0 483.8 L36.4 487.4 L28.9 490.0 L27.6 488.4 L30.3 481.1 L30.6 479.8 L31.0 478.1 L31.7 475.1 L32.3 473.8 L35.7 472.8 L38.1 473.8 L43.6 476.5 L44.6 476.5 L41.9 471.2 L40.8 473.2 L39.5 472.2 L34.7 468.9 L35.7 465.5 L39.8 461.9 L40.5 463.6 L44.6 466.2 L44.2 466.5 L43.2 468.9 L47.0 467.9 L50.7 469.5 L51.4 472.5 L50.4 473.5 L49.0 476.1 L53.4 474.2 L54.5 471.8 L57.9 475.1 L58.9 478.5 L59.6 479.8 L61.6 480.8 L61.6 479.8 L60.9 476.5 L58.2 473.2 L51.4 465.5 L56.5 463.6 L61.3 462.6 L62.6 464.9 L65.3 466.5 L67.7 466.5 L68.7 464.9 L65.0 464.5 L63.6 462.9 L64.0 460.6 L64.7 459.2 L61.9 458.9 L57.2 460.6 L54.5 460.9 L51.7 461.2 L51.1 459.2 L50.0 456.3 L48.3 451.0 L48.0 449.3 L48.3 448.3 L52.1 447.0 L55.1 450.6 L59.2 453.0 L59.9 451.6 L56.2 448.0 L52.8 444.7 L51.7 444.3 L53.8 441.0 L56.8 439.4 L59.6 443.0 L59.9 447.3 L61.3 447.3 L61.6 444.0 L64.7 444.3 L66.4 444.0 L61.6 441.7 L59.2 439.0 L58.2 435.7 L60.9 434.1 L66.4 436.1 L71.1 438.4 L71.1 437.4 L66.7 435.1 L61.3 431.8 L61.6 431.1 L66.0 426.5 L69.8 425.5 L69.4 424.5 L73.9 420.5 L76.2 420.8 L78.3 424.8 L77.3 428.4 L78.3 431.4 L79.0 434.4 L82.7 434.4 L82.0 432.1 L80.3 429.1 L79.0 422.5 L78.3 420.2 L78.6 417.5 L79.0 415.9 L81.0 413.2 L85.4 415.2 L84.7 417.9 L84.1 420.2 L86.1 424.1 L86.4 422.2 L88.5 416.2 L86.1 411.9 L86.1 409.9 L88.5 408.9 L91.6 412.6 L93.3 412.6 L88.5 406.9 L88.5 406.3 L90.5 404.3 L94.3 402.6 L95.3 400.6 L98.7 398.0 L102.4 397.3 L107.9 401.3 L109.9 404.6 L111.6 404.3 L112.0 402.9 L111.3 401.3 L107.5 398.0 L106.2 396.7 L105.8 395.3 L106.2 393.0 L105.8 391.4 L105.2 389.4 L104.8 388.0 L106.5 385.7 L110.6 381.1 L116.7 376.1 L118.1 371.2 L124.6 370.5 L125.2 368.2 L124.2 366.2 L122.9 365.2 L130.0 360.2 L137.5 353.9 L139.2 350.0 L139.5 348.6 L141.2 346.6 L141.2 344.3 L148.0 343.3 L153.8 340.7 L157.6 339.4 L161.3 338.7 L163.4 341.3 L170.9 340.4 L178.7 333.7 L182.8 330.4 L186.5 327.8 L187.2 326.4 L187.5 324.8 L192.0 320.2 L193.3 318.2 L194.7 316.8 L197.1 314.9 L198.8 313.2 L200.5 314.2 L202.5 313.5 L204.5 313.2 L209.3 311.5 L211.0 308.9 L213.7 307.2 L218.8 305.6 L221.9 304.6 L225.3 301.6 L229.0 300.3 L231.1 299.0 L236.2 296.0 L237.6 293.0 L238.9 291.0 L241.6 289.7 L242.0 287.7 L242.3 286.0 L253.6 279.1 L255.6 274.8 L258.0 273.5 L258.7 271.8 L259.3 270.1 L263.8 267.5 L267.2 268.5 L268.9 267.8 L271.3 260.9 L268.2 263.2 L265.8 266.2 L266.1 264.5 L266.8 262.5 L271.3 257.9 L275.3 256.2 L278.7 254.2 L279.8 252.3 L281.1 250.6 L282.8 250.9 L286.2 247.0 L295.8 242.3 L301.9 239.3 L303.2 238.0 L305.3 235.7 L307.7 233.4 L311.8 229.1 L312.1 227.1 L313.1 225.1 L316.9 220.1 L319.6 216.2 L320.6 214.8 L323.3 212.9 L326.4 208.5 L328.8 205.9 L329.8 204.2 L331.8 199.9 L334.2 196.3 L335.6 190.3 L335.9 189.0 L339.7 182.7 L340.0 181.7 L340.3 180.7 L340.7 179.7 L341.4 174.4 L341.7 171.8 L342.0 168.8 L342.4 166.2 L342.7 164.8 L343.1 163.8 L343.7 161.5 L344.1 159.2 L348.5 152.2 L349.5 149.3 L349.9 147.6 L350.2 146.0 L351.2 142.3 L351.9 139.7 L353.3 136.0 L352.6 134.4 L352.3 134.4 L351.9 129.4 L354.3 128.7 L359.1 129.1 L361.1 128.7 L363.5 128.7 L373.0 123.1 L376.4 119.8 L378.5 119.5 L380.5 116.1 L381.5 114.5 L382.2 112.5 L382.9 110.8 L383.6 109.2 L384.9 106.9 L385.3 105.2 L387.0 102.6 L387.3 99.9 L391.4 96.9 L392.8 93.3 L393.8 87.3 L394.1 85.7 L395.5 85.3 L397.5 84.7 L396.2 81.7 L395.8 79.4 L395.5 74.8 L395.8 68.5 L396.2 67.1 L395.8 62.5 L395.5 49.6 L396.5 45.3 L398.2 44.3 L399.6 41.6 L400.6 38.7 L401.9 38.0 L403.3 36.0 L412.2 30.7 L419.3 21.4 L424.7 17.1 L423.7 19.4 L424.4 21.4 L426.1 19.8 L428.8 18.8 L428.5 17.5 L430.9 16.1 L429.8 14.5 L427.5 15.8 L426.4 15.1 L431.6 10.5 L441.8 9.8 L453.7 11.8 L452.3 12.2 L440.7 11.2 L438.7 11.2 L437.0 14.5 L436.7 16.1 L436.0 19.1 L435.0 21.4 L435.3 22.8 L433.9 23.4 L432.6 23.4 L433.6 25.7 L435.6 29.0 L435.0 32.7 L437.0 32.0 L437.7 33.7 L439.7 36.3 L446.5 42.3 L449.9 40.6 L451.3 40.3 L452.3 37.3 L455.4 36.3 L457.4 38.3 L457.1 40.6 L456.7 44.0 L459.8 44.6 L460.1 46.3 L459.8 47.6 L459.5 49.6 L459.8 52.2 L458.4 55.9 L456.1 58.5 L458.1 58.5 L458.4 60.5 L460.5 67.8 L460.1 68.5 L458.4 67.8 L458.1 68.8 L459.5 73.1 L460.1 74.8 L461.2 73.8 L461.8 77.4 L462.2 79.1 L463.2 81.7 L461.5 84.4 L463.9 86.3 L470.3 85.7 L475.1 82.0 L478.9 76.7 L485.0 71.4 L487.0 69.8 L486.3 71.8 L490.1 70.4 L493.8 66.5 L494.9 66.1 L494.5 64.8 L496.6 61.8 L498.6 62.5 L500.0 66.8 L501.3 65.8 L503.0 66.1 L502.3 64.5 L505.4 61.8 L507.1 60.5 L505.7 58.2 L503.0 60.2 L502.7 58.2 L504.4 56.2 L508.5 54.5 L511.9 52.6 L513.6 50.2 L513.9 53.9 L515.6 54.5 L518.3 51.2 L522.8 47.6 L525.8 48.3 L526.2 49.6 L524.5 50.6 L522.1 50.2 L521.1 52.6 L519.0 53.6 L518.3 54.9 L518.7 56.9 L514.6 57.5 L514.3 57.5 L510.9 56.5 L510.5 59.5 L508.8 61.2 L510.2 62.5 L509.8 64.5 L509.1 67.1 L510.9 66.5 L512.6 63.2 L514.9 61.8 L516.6 61.5 L520.7 62.2 L519.0 63.2 L518.0 64.5 L516.0 64.2 L514.9 66.8 L514.6 68.5 L512.6 69.8 L511.9 71.8 L514.9 72.8 L515.3 75.7 L514.3 78.7 L508.8 81.4 L508.1 83.0 L517.0 80.1 L519.7 79.1 L517.7 78.1 L521.1 77.1 L524.8 78.1 L527.2 76.4 L530.6 75.7 L533.3 73.8 L525.1 73.4 L524.1 74.8 L522.8 75.1 L522.4 73.8 L519.4 74.8 L517.0 74.1 L516.6 72.8 L519.4 68.1 L520.4 66.5 L521.1 65.5 L520.7 64.5 L522.1 66.1 L521.7 67.8 L522.1 69.8 L524.1 68.1 L525.1 65.8 L527.2 65.5 L527.2 60.8 L526.8 58.5 L525.5 58.2 L524.1 61.5 L523.1 60.8 L521.1 58.2 L523.1 57.9 L522.4 55.9 L523.4 55.9 L524.1 54.2 L527.5 57.2 L531.6 58.5 L532.6 56.9 L535.4 56.9 L535.7 54.2 L537.7 55.5 L538.4 60.2 L536.7 60.5 L538.1 63.5 L544.9 56.9 L545.9 56.9 L545.9 58.9 L543.5 62.8 L541.8 65.8 L540.5 68.8 L538.4 70.4 L538.1 65.5 L536.7 66.8 L536.0 67.8 L535.4 68.8 L538.4 73.1 L537.7 75.1 L536.4 75.4 L529.9 77.7 L527.2 79.7 L525.1 79.1 L522.4 80.1 L519.7 82.0 L519.4 83.0 L521.4 83.4 L525.8 82.7 L531.3 80.7 L533.3 79.7 L534.3 79.4 L535.7 81.0 L538.1 82.0 L542.8 80.1 L544.2 82.0 L541.1 85.7 L540.5 87.3 L536.4 89.3 L538.1 86.0 L536.7 85.7 L535.0 87.0 L534.7 85.7 L531.6 89.3 L530.2 92.6 L527.9 96.6 L527.2 98.3 L527.5 100.3 L527.9 101.6 L528.2 104.9 L528.9 105.9 L529.9 107.5 L530.2 108.5 L530.9 109.9 L532.3 109.2 L532.6 107.9 L532.0 106.2 L531.6 104.6 L533.3 107.5 L535.7 111.5 L536.4 114.5 L536.7 115.8 L537.4 119.1 L538.1 121.8 L539.1 124.4 L541.1 126.4 L543.9 126.1 L543.5 127.4 L538.8 137.7 L523.4 155.2 L521.4 160.5 L521.1 166.2 L519.4 169.8 L516.6 174.1 L512.6 177.1 L509.1 182.1 L507.1 182.7 L506.1 184.7 L503.7 187.4 L504.7 191.0 L505.4 192.3 L502.7 190.7 L496.6 194.3 L493.8 197.9 L493.2 199.6 L492.5 201.3 L492.1 202.6 L491.8 203.9 L490.4 207.6 L487.0 210.9 L488.4 212.2 L486.0 217.5 L484.6 220.5 L483.3 223.4 L482.6 225.8 L482.3 227.1 L481.6 228.7 L478.5 231.4 L478.2 236.7 L477.8 237.7 L475.5 241.7 L469.3 244.6 L466.3 246.3 L461.8 252.3 L450.6 255.2 L442.8 262.2 L441.1 266.8 L439.4 269.8 L438.7 272.5 L439.4 274.1 L439.0 275.8 L438.4 283.4 L437.7 284.7 L437.3 286.4 L437.7 288.4 L438.0 290.0 L438.7 293.0 L439.0 294.0 L440.1 297.0 L440.7 300.0 L438.7 299.6 L439.0 300.6 L443.5 302.9 L442.8 303.6 L437.0 304.6 L434.3 306.6 L436.7 307.6 L440.1 306.2 L444.8 305.6 L446.2 307.6 L446.5 308.6 L448.2 308.6 L448.6 306.9 L450.3 305.3 L451.0 310.9 L452.7 310.2 L454.4 307.6 L457.8 309.9 L460.5 307.6 L463.2 311.9 L462.5 314.5 L463.9 320.2 L463.5 322.8 L463.2 324.5 L462.5 326.1 L461.5 325.5 L458.8 327.4 L458.1 330.1 L456.7 329.1 L455.7 329.4 L454.7 326.8 L453.3 322.1 L452.7 319.2 L452.0 318.2 L451.0 318.2 L452.0 320.5 L451.3 322.1 L451.0 323.1 L452.3 329.4 L447.9 331.4 L443.8 329.4 L442.4 328.4 L439.0 324.1 L439.4 322.1 L435.6 323.8 L434.6 322.5 L433.6 322.1 L431.6 322.5 L425.1 324.1 L416.6 326.8 L416.6 326.1 L417.9 324.5 L424.4 322.8 L428.1 321.5 L430.2 320.8 L430.5 318.5 L426.1 317.8 L424.1 315.5 L421.0 314.2 L416.6 315.5 L414.9 317.8 L414.2 326.8 L407.7 328.8 L406.7 328.8 L403.6 330.8 L399.2 333.1 L379.5 345.7 L376.1 346.3 L374.7 346.3 L365.2 351.3 L361.8 353.9 L357.4 356.3 L353.3 359.9 L346.5 366.2 L343.7 366.5 L342.7 367.8 L341.7 370.8 L338.6 376.1 L338.3 382.7 L336.9 386.1 L335.2 390.0 L334.2 390.7 L333.2 394.7 L333.5 397.0 L333.9 406.3 L334.6 410.6 L334.2 412.2 L332.5 413.5 L333.5 415.5 L334.2 417.2 L333.9 422.2 L333.5 424.8 L333.2 426.8 L331.2 431.1 L330.5 433.1 L329.8 434.7 L324.7 443.7 L317.9 451.6 L314.5 459.6 L314.1 460.9 L313.8 462.2 L313.5 463.9 L312.4 470.2 L313.5 473.5 L310.0 477.8 L310.4 478.8 L310.7 480.4 L306.3 485.1 L306.6 486.4 L305.6 489.1 L303.6 488.4 L303.6 490.7 L303.9 492.4 L299.5 493.4 L298.1 495.0 L300.9 496.3 L297.5 500.3 L294.7 502.0 L294.4 504.3 L295.4 504.6 L298.1 505.6 L299.5 505.0 L303.2 507.6 L301.2 509.9 L298.1 510.6 L295.8 513.6 L293.4 515.2 L292.7 516.9 L290.3 518.5 L290.7 519.9 L295.1 517.5 L299.8 514.9 L300.5 512.9 L303.6 510.9 L304.9 509.6 L305.3 511.2 L305.6 513.2 L305.3 517.2 L303.9 518.5 L299.5 519.9 L296.8 521.2 L284.9 522.5 L279.4 524.5 L269.2 535.7 L268.9 537.1 L268.2 541.4 L266.8 546.0 L262.4 549.0 L258.7 550.7 L255.6 554.6 L245.7 561.6 L242.3 566.2 L242.0 567.9 L241.6 569.5 L241.3 574.2 L237.6 576.5 L231.4 575.2 L229.7 577.1 L234.8 577.8 L234.5 578.8 L233.8 580.5 L229.4 582.4 L223.9 583.8 L220.9 583.8 L216.5 586.8 L216.1 589.4 L211.7 588.4 L210.0 590.4 L204.9 589.1 L197.7 592.0 L197.1 590.4 L197.4 588.4 L196.0 588.1 L195.4 590.7 L194.3 592.4 L191.6 592.7 L189.9 590.7 L188.2 590.1 L188.2 592.7 L186.5 594.0 Z"/>
@@ -182,18 +179,7 @@ footer{border-top:1px solid var(--line);padding-block:20px 40px;font-size:.8rem;
 <circle class="stop" cx="453.9" cy="322.1" r="5"/><text x="462.9" y="326.1" text-anchor="start">Akaroa</text>
 </svg>
       <figcaption class="maplegend"><span><i style="background:#ef6a55"></i>our drives (real roads)</span><span><i style="background:#e0a030"></i>Milford coach</span><span><i style="background:#3fb8c4"></i>lakes</span></figcaption>
-    </figure>
-  </div>
-</header>
-
-<main class="wrap">
-
-<section>
-  <div class="verdict">
-    <span class="eyebrow">Is this the best honeymoon route?</span>
-    <p><b>Yes. Keep the route and all 13 nights.</b> Codex compared every stop with the classic alternatives: Pukaki/Twizel stargazing cabins, The Hermitage, a second Wānaka night, a Milford overnight cruise, Glenorchy lodges, Hokitika, Kaikōura, Hanmer Springs and an Akaroa overnight. This loop has the best late-winter scenery and still leaves room to retry Milford and the heli-hike if the weather turns. The one weak spot is four one-night stops at the start. A second night in Wānaka is only worth it if we drop Akaroa.</p>
-  </div>
-</section>
+    </figure></section>
 
 <section aria-labelledby="stays-h">
   <h2 id="stays-h">Where we sleep</h2>
@@ -222,7 +208,7 @@ footer{border-top:1px solid var(--line);padding-block:20px 40px;font-size:.8rem;
   <p class="note" style="margin-bottom:14px"><span class="tag t-ok">FIANZ</span> certified halal · <span class="tag t-warn">Ask</span> Muslim-owned or says halal, but not verified · <span class="tag t-cook">Cook</span> cook in the room. Each “Watch in 3D” link opens the vlog at that day.</p>
   <div class="days">
 
-  <article class="day star">
+  <article class="day star" id="trip-day-0">
     <div class="rail"><span class="n">Departure</span><span class="date">24</span><span class="wd">Tue · Aug</span></div>
     <div class="dbody">
       <div class="dhead"><h3>Singapore → Christchurch</h3><div class="chips"><span class="chip">SQ297 · 19:50 → 09:30</span></div></div>
@@ -235,7 +221,7 @@ footer{border-top:1px solid var(--line);padding-block:20px 40px;font-size:.8rem;
     </div>
   </article>
 
-  <article class="day">
+  <article class="day" id="trip-day-1">
     <div class="rail"><span class="n">Day 1</span><span class="date">25</span><span class="wd">Wed · Aug</span></div>
     <div class="dbody">
       <div class="dhead"><h3>Arrive Christchurch</h3><div class="chips"><span class="chip drive">8 km</span></div></div>
@@ -248,7 +234,7 @@ footer{border-top:1px solid var(--line);padding-block:20px 40px;font-size:.8rem;
     </div>
   </article>
 
-  <article class="day star">
+  <article class="day star" id="trip-day-2">
     <div class="rail"><span class="n">Day 2</span><span class="date">26</span><span class="wd">Thu · Aug</span></div>
     <div class="dbody">
       <div class="dhead"><h3>Lake Tekapo</h3><div class="chips"><span class="chip drive">227 km · ~3 h</span><span class="chip">Stargazing</span></div></div>
@@ -261,7 +247,7 @@ footer{border-top:1px solid var(--line);padding-block:20px 40px;font-size:.8rem;
     </div>
   </article>
 
-  <article class="day">
+  <article class="day" id="trip-day-3">
     <div class="rail"><span class="n">Day 3</span><span class="date">27</span><span class="wd">Fri · Aug</span></div>
     <div class="dbody">
       <div class="dhead"><h3>Aoraki/Mt Cook</h3><div class="chips"><span class="chip drive">123 km · ~1½ h</span><span class="chip">Jumu'ah: pray in the room</span></div></div>
@@ -274,7 +260,7 @@ footer{border-top:1px solid var(--line);padding-block:20px 40px;font-size:.8rem;
     </div>
   </article>
 
-  <article class="day">
+  <article class="day" id="trip-day-4">
     <div class="rail"><span class="n">Day 4</span><span class="date">28</span><span class="wd">Sat · Aug</span></div>
     <div class="dbody">
       <div class="dhead"><h3>Wānaka over Lindis Pass</h3><div class="chips"><span class="chip drive">209 km · ~2¾ h · 971 m pass</span></div></div>
@@ -287,7 +273,7 @@ footer{border-top:1px solid var(--line);padding-block:20px 40px;font-size:.8rem;
     </div>
   </article>
 
-  <article class="day">
+  <article class="day" id="trip-day-5">
     <div class="rail"><span class="n">Day 5</span><span class="date">29</span><span class="wd">Sun · Aug</span></div>
     <div class="dbody">
       <div class="dhead"><h3>Te Anau</h3><div class="chips"><span class="chip drive">274 km · ~3½ h via Cromwell</span></div></div>
@@ -300,7 +286,7 @@ footer{border-top:1px solid var(--line);padding-block:20px 40px;font-size:.8rem;
     </div>
   </article>
 
-  <article class="day star">
+  <article class="day star" id="trip-day-6">
     <div class="rail"><span class="n">Day 6</span><span class="date">30</span><span class="wd">Mon · Aug</span></div>
     <div class="dbody">
       <div class="dhead"><h3>Milford Sound</h3><div class="chips"><span class="chip">Coach + cruise</span><span class="chip">Homer Tunnel</span></div></div>
@@ -313,7 +299,7 @@ footer{border-top:1px solid var(--line);padding-block:20px 40px;font-size:.8rem;
     </div>
   </article>
 
-  <article class="day">
+  <article class="day" id="trip-day-7">
     <div class="rail"><span class="n">Day 7</span><span class="date">31</span><span class="wd">Tue · Aug</span></div>
     <div class="dbody">
       <div class="dhead"><h3>Queenstown</h3><div class="chips"><span class="chip drive">172 km · ~2¼ h</span></div></div>
@@ -326,7 +312,7 @@ footer{border-top:1px solid var(--line);padding-block:20px 40px;font-size:.8rem;
     </div>
   </article>
 
-  <article class="day star">
+  <article class="day star" id="trip-day-8">
     <div class="rail"><span class="n">Day 8</span><span class="date">1</span><span class="wd">Wed · Sep</span></div>
     <div class="dbody">
       <div class="dhead"><h3>Snow day and Onsen</h3><div class="chips"><span class="chip">New moon</span></div></div>
@@ -339,7 +325,7 @@ footer{border-top:1px solid var(--line);padding-block:20px 40px;font-size:.8rem;
     </div>
   </article>
 
-  <article class="day">
+  <article class="day" id="trip-day-9">
     <div class="rail"><span class="n">Day 9</span><span class="date">2</span><span class="wd">Thu · Sep</span></div>
     <div class="dbody">
       <div class="dhead"><h3>Glenorchy</h3><div class="chips"><span class="chip drive">99 km return</span></div></div>
@@ -352,7 +338,7 @@ footer{border-top:1px solid var(--line);padding-block:20px 40px;font-size:.8rem;
     </div>
   </article>
 
-  <article class="day">
+  <article class="day" id="trip-day-10">
     <div class="rail"><span class="n">Day 10</span><span class="date">3</span><span class="wd">Fri · Sep</span></div>
     <div class="dbody">
       <div class="dhead"><h3>Haast Pass to Franz Josef</h3><div class="chips"><span class="chip drive">404 km · 6–7 h</span><span class="chip">Jumu'ah: pray as travellers</span></div></div>
@@ -365,7 +351,7 @@ footer{border-top:1px solid var(--line);padding-block:20px 40px;font-size:.8rem;
     </div>
   </article>
 
-  <article class="day star">
+  <article class="day star" id="trip-day-11">
     <div class="rail"><span class="n">Day 11</span><span class="date">4</span><span class="wd">Sat · Sep</span></div>
     <div class="dbody">
       <div class="dhead"><h3>Glacier heli-hike</h3><div class="chips"><span class="chip">Helicopter</span></div></div>
@@ -378,7 +364,7 @@ footer{border-top:1px solid var(--line);padding-block:20px 40px;font-size:.8rem;
     </div>
   </article>
 
-  <article class="day">
+  <article class="day" id="trip-day-12">
     <div class="rail"><span class="n">Day 12</span><span class="date">5</span><span class="wd">Sun · Sep</span></div>
     <div class="dbody">
       <div class="dhead"><h3>Arthur's Pass to Christchurch</h3><div class="chips"><span class="chip drive">376 km · 5½–6½ h · 920 m pass</span></div></div>
@@ -391,7 +377,7 @@ footer{border-top:1px solid var(--line);padding-block:20px 40px;font-size:.8rem;
     </div>
   </article>
 
-  <article class="day">
+  <article class="day" id="trip-day-13">
     <div class="rail"><span class="n">Day 13</span><span class="date">6</span><span class="wd">Mon · Sep</span></div>
     <div class="dbody">
       <div class="dhead"><h3>Akaroa</h3><div class="chips"><span class="chip drive">163 km return</span></div></div>
@@ -404,7 +390,7 @@ footer{border-top:1px solid var(--line);padding-block:20px 40px;font-size:.8rem;
     </div>
   </article>
 
-  <article class="day star">
+  <article class="day star" id="trip-day-14">
     <div class="rail"><span class="n">Day 14</span><span class="date">7</span><span class="wd">Tue · Sep</span></div>
     <div class="dbody">
       <div class="dhead"><h3>Fly home</h3><div class="chips"><span class="chip">SQ298 · 10:50 → 17:40</span></div></div>

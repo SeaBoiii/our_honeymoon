@@ -1,5 +1,9 @@
 # 3D Honeymoon Map — Asset Spec (Codex builds, Claude consumes)
 
+This is the original low-poly brief. The current atlas retains its projection,
+vehicle axes and node names. Its updated assets and measurements are in
+`assets/manifest.json`. The new Hooker Valley cutaway has a 950 KB budget.
+
 Codex builds every asset in the live Blender session through the Blender MCP and exports glTF binaries (`.glb`) into `map3d/assets/`. Claude writes the three.js web app in `map3d/` that loads these files. Don't write any web code.
 
 ## Art direction

@@ -4,6 +4,7 @@ import json
 import math
 import re
 import bpy
+import bmesh
 from mathutils import Vector, Matrix
 
 PROJECT_ROOT = Path(globals().get('PROJECT_ROOT', 'C:/Users/seabo/Documents/GitHub/our_honeymoon')).resolve()
@@ -42,7 +43,10 @@ def material(key, vertex_color=False, emission=0.0):
     output = mat.node_tree.nodes.new('ShaderNodeOutputMaterial')
     bsdf = mat.node_tree.nodes.new('ShaderNodeBsdfPrincipled')
     bsdf.inputs['Base Color'].default_value = rgba(key)
-    bsdf.inputs['Roughness'].default_value = .87
+    bsdf.inputs['Roughness'].default_value = {'glass': .23, 'ice': .33, 'water': .28,
+                                               'red': .38, 'fiord': .36}.get(key, .76)
+    if key in ('glass', 'red'):
+        bsdf.inputs['Metallic'].default_value = .18
     mat.diffuse_color = rgba(key)
     if vertex_color:
         attr = mat.node_tree.nodes.new('ShaderNodeVertexColor')
@@ -243,11 +247,15 @@ def export_glb(root_obj, path):
                 print('[export] Retrying without unsupported %s: %s' % (rejected, message))
                 kwargs.pop(rejected)
                 optional.remove(rejected)
-        limit = 6_000_000 if root_obj.name == 'Terrain' else 300_000
+        limit = 6_000_000 if root_obj.name == 'Terrain' else (950_000 if root_obj.name == 'HookerValley' else 300_000)
         size = path.stat().st_size
         if size >= limit:
             raise RuntimeError('%s is %s bytes; budget is strictly under %s bytes' % (path.name,size,limit))
         print('[export] %s: %s triangles, %.1f KB' % (path.name,asset_stats(root_obj)[0],size/1000))
+        import base64
+        dest = PROJECT_ROOT / 'map3d/web_assets' / (path.stem+'.json')
+        dest.write_text(json.dumps({'format':'glb-base64','name':path.stem,
+                                    'data':base64.b64encode(path.read_bytes()).decode('ascii')}), encoding='utf-8')
     finally:
         for obj in nodes:
             obj.select_set(False)
@@ -261,7 +269,7 @@ def export_glb(root_obj, path):
 
 
 ASSET_DEFINITIONS = [
-    ('terrain_south_island','Terrain','LINZ DEM elevation at 5x; lowered real-road corridors; hand-digitised rings; separate water surfaces.'),
+    ('terrain_south_island','Terrain','LINZ DEM at 5x, Natural Earth coastline fitted to roads, eight lake surfaces and height-blended winter vegetation.'),
     ('car','Car','Compact SUV, ski rack; +Y forward.'),
     ('coach','Coach','Generic white touring coach; +Y forward.'),
     ('helicopter','Helicopter','Rotor local Z; TailRotor local X; +Y forward.'),
@@ -279,6 +287,7 @@ ASSET_DEFINITIONS = [
     ('pine_tree','PineTree','Conifer.'),('beech_tree','BeechTree','Rounded native tree.'),
     ('sheep','Sheep','Wool body, dark head and four legs.'),
     ('pin','Pin','Accent-red map pin with an actual heart-shaped aperture.'),
+    ('hooker_valley','HookerValley','Alpine valley miniature with a braided river and a suspended timber footbridge.'),
 ]
 
 
@@ -294,13 +303,25 @@ class Kit:
         return '%s_%s_%03d' % (self.obj.name,label,self.counter)
 
     def cube(self, loc, size, mat, label='Block', parent=None):
-        return box(self.name(label),loc,size,mat,self.col,parent or self.obj)
+        obj = box(self.name(label),loc,size,mat,self.col,parent or self.obj)
+        # Small fittings stay light. Larger panels catch a narrow highlight.
+        if min(size) > .035:
+            bm = bmesh.new()
+            bm.from_mesh(obj.data)
+            bmesh.ops.bevel(bm, geom=list(bm.edges), offset=min(size)*.10,
+                            segments=2, affect='EDGES', profile=.5)
+            bm.to_mesh(obj.data)
+            bm.free()
+        return obj
 
     def cone(self, loc, r1, r2, depth, mat, n=12, axis=(0,0,1), parent=None, label='Cylinder'):
-        return frustum(self.name(label),loc,r1,r2,depth,mat,self.col,parent or self.obj,n,axis)
+        return frustum(self.name(label),loc,r1,r2,depth,mat,self.col,parent or self.obj,n+4,axis)
 
     def ball(self, loc, scale, mat, n=12, rings=5, dome=False, label='Facets', parent=None):
-        return ellipsoid(self.name(label),loc,scale,mat,self.col,parent or self.obj,n,rings,dome)
+        obj = ellipsoid(self.name(label),loc,scale,mat,self.col,parent or self.obj,n+4,rings+2,dome)
+        for face in obj.data.polygons:
+            face.use_smooth = True
+        return obj
 
     def bar(self, a,b,r,mat,n=8,label='Beam',parent=None):
         return beam(self.name(label),a,b,r,mat,self.col,parent or self.obj,n)
@@ -315,6 +336,12 @@ class Kit:
                          [(0,1,4),(3,5,2),(0,4,5,3),(1,2,5,4),(3,2,1,0)],mat,'GableRoof')
 
     def finish(self, filename, vehicle=False):
+        # Batch static pieces for the web renderer while retaining animated pivots.
+        for pivot in [o for o in descendants(self.obj) if o.type == 'EMPTY']:
+            pieces = [o for o in pivot.children if o.type == 'MESH']
+            if len(pieces) > 1:
+                with bpy.context.temp_override(active_object=pieces[0], selected_editable_objects=pieces):
+                    bpy.ops.object.join()
         normalize_asset(self.obj,length=4.5 if vehicle else None)
         _,lo,hi=asset_stats(self.obj)
         if abs(lo[2])>1e-5 or abs(lo[0]+hi[0])>1e-5 or abs(lo[1]+hi[1])>1e-5:

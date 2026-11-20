@@ -1,6 +1,6 @@
-<title>Honeymoon Road Trip 3D</title>
+<title>South Island in 3D · Honeymoon Atlas</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="../atlas/type.css">
 <style>
 /* Layout: full-bleed WebGL (globe for the flights, South Island diorama for the trip). Vlog layer on top: REC stamp, chapter cards, subtitles, letterbox. Day list docked left, transport bar bottom. */
 :root{
@@ -99,20 +99,22 @@ body.rolling #rec i{opacity:1;animation:blink 1.2s steps(2) infinite}
 }
 @media (prefers-reduced-motion:reduce){body.rolling #rec i{animation:none}#chapter,.lb{transition:none}}
 </style>
+<link rel="stylesheet" href="../atlas/map.css">
 
 <div id="app">
-  <canvas id="c" aria-label="3D travel map: Singapore to Christchurch and the South Island honeymoon route"></canvas>
+  <canvas id="c" tabindex="0" aria-label="3D travel map. In the overview and landmark views, use arrow keys to orbit and plus or minus to zoom."></canvas>
   <div id="labels"></div>
   <div id="fade"></div>
   <div class="lb" id="lbTop"></div><div class="lb" id="lbBot"></div>
   <div id="rec"><i></i><span id="stamp">TUE 24 AUG 2027 · 19:20 · SINGAPORE</span></div>
-  <div id="chapter" class="show"><div class="k" id="chK">A honeymoon travel vlog</div><h2 id="chT">Singapore to Aotearoa</h2><div class="s" id="chS">14 days on New Zealand's South Island · Press Play</div></div>
+  <div id="chapter"><div class="k" id="chK">A honeymoon travel vlog</div><h2 id="chT">Singapore to Aotearoa</h2><div class="s" id="chS">14 days on New Zealand's South Island · Press Play</div></div>
 
   <aside id="side" class="glass" data-open="false">
     <header>
-      <div><span class="sub">24 Aug – 7 Sep 2027</span><h1>The South Island loop</h1><a class="itin" href="https://claude.ai/artifact/U9TV22y5gkKzKZtULwJ8xp" target="_blank" rel="noopener">Full itinerary and hotels ↗</a></div>
+      <div><span class="sub">24 Aug – 7 Sep 2027</span><h1>The South Island loop</h1><a class="itin" href="https://claude.ai/artifact/U9TV22y5gkKzKZtULwJ8xp" target="_blank" rel="noopener">← Itinerary and stays</a></div>
       <button class="btn" id="toggle" aria-expanded="false" aria-controls="days">Days</button>
     </header>
+    <label class="landmark-picker"><select id="places" aria-label="Explore a 3D landmark" disabled><option value="">Explore a landmark…</option></select></label>
     <ol id="days"></ol>
   </aside>
   <div id="sub" aria-live="polite"></div>
@@ -121,8 +123,10 @@ body.rolling #rec i{opacity:1;animation:blink 1.2s steps(2) infinite}
     <span id="leg">Episode 1</span>
     <h2 id="ctitle">Singapore → Christchurch</h2>
     <p class="more" id="ctext">SQ297 leaves Changi T3 at 19:50 and lands in Christchurch at 09:30 the next morning.</p>
+    <div class="route-key" aria-label="Route colours"><span>Drive</span><span>Coach</span><span>Cruise</span></div>
     <p class="food" id="cfood">Halal: pre-order the Muslim meal (MOML) on both flights.</p>
     <p class="food" id="cstay">Tonight: on the plane (SQ297)</p>
+    <button type="button" class="btn" id="back-day" hidden>Follow this day</button>
   </section>
 
   <div id="bar" class="glass">
@@ -133,19 +137,28 @@ body.rolling #rec i{opacity:1;animation:blink 1.2s steps(2) infinite}
     <span id="clock">24 Aug</span>
     <button class="btn" id="speed" aria-label="Playback speed">1×</button>
     <button class="btn" id="follow" aria-pressed="true">Follow</button>
-    <button class="btn" id="overview">Map</button>
+    <button class="btn" id="overview">Route</button>
   </div>
-  <div id="status" class="glass">Loading the map…</div>
+  <div id="status" role="status" class="glass">Loading the map…</div>
+  <noscript><p class="glass" style="position:absolute;inset:25% 10% auto;padding:20px;z-index:8">Enable JavaScript to explore the map, or <a href="https://claude.ai/artifact/U9TV22y5gkKzKZtULwJ8xp">read the itinerary</a>.</p></noscript>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/GLTFLoader.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="../atlas/three-r147/three.min.js"></script>
+<script src="../atlas/three-r147/GLTFLoader.js"></script>
+<script src="../atlas/three-r147/OrbitControls.js"></script>
+<script src="../atlas/miniatures.js"></script>
+<script src="../atlas/relief.js"></script>
 <script>
 (function(){
 'use strict';
 const $=id=>document.getElementById(id);
 // ---------- shared projection for the South Island diorama (matches map3d/ASSET_SPEC.md) ----------
+function mapUnavailable(){
+  $('status').hidden=false;
+  $('status').innerHTML='This map needs WebGL. <a href="https://claude.ai/artifact/U9TV22y5gkKzKZtULwJ8xp">Open the illustrated itinerary</a>.';
+  $('chapter').classList.remove('show');
+}
+if(!window.THREE){mapUnavailable();return;}
 const KX=8.008, KY=11.132;
 const P=(lat,lon)=>({x:(lon-170.5)*KX, z:-(lat+44)*KY});
 const rev=a=>a.slice().reverse();
@@ -223,12 +236,19 @@ const MODE={car:{c:'#c8432f',v:3.6,name:'Drive',len:.42},coach:{c:'#e0a030',v:3.
 
 // ---------- renderer, two scenes ----------
 const canvas=$('c');
-const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+let renderer;
+try{renderer=new THREE.WebGLRenderer({canvas,antialias:true});}
+catch(error){mapUnavailable();return;}
+renderer.setPixelRatio(Math.min(devicePixelRatio,matchMedia('(pointer:coarse)').matches?1.5:2));
 renderer.outputEncoding=THREE.sRGBEncoding;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=.94;
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 const camera=new THREE.PerspectiveCamera(42,1,.02,1200);
 const controls=new THREE.OrbitControls(camera,canvas);
 controls.enableDamping=true;
+let needsDraw=true;
+controls.addEventListener('change',()=>{needsDraw=true;});
 
 // globe
 const gScene=new THREE.Scene();gScene.background=new THREE.Color('#050b18');
@@ -249,12 +269,12 @@ function gcPath(a,b,n){const va=gv(a[0],a[1],1).normalize(),vb=gv(b[0],b[1],1).n
 
 // South Island diorama
 const scene=new THREE.Scene();
-const DAY=new THREE.Color('#bfdbe6'),NIGHT=new THREE.Color('#0b1430'),skyCol=DAY.clone();
+const DAY=new THREE.Color('#d4e5de'),NIGHT=new THREE.Color('#0b1430'),skyCol=DAY.clone();
 scene.background=skyCol;scene.fog=new THREE.FogExp2(skyCol,.0035);
-const hemi=new THREE.HemisphereLight('#e6f3f7','#6b5a3a',.9);scene.add(hemi);
-const sun=new THREE.DirectionalLight('#fff1dc',1.1);sun.position.set(-30,40,20);scene.add(sun);
+const hemi=new THREE.HemisphereLight('#f1f6ef','#6f785d',.9);scene.add(hemi);
+const sun=new THREE.DirectionalLight('#fff1dc',1.1);sun.position.set(-32,24,14);scene.add(sun);
 const sea=new THREE.Mesh(new THREE.PlaneGeometry(900,900),new THREE.MeshStandardMaterial({color:'#2d7d9e',roughness:.55,metalness:.05}));
-sea.rotation.x=-Math.PI/2;scene.add(sea);
+sea.rotation.x=-Math.PI/2;sea.position.y=-.018;scene.add(sea);
 const nzStars=stars(1800,380);nzStars.material.opacity=0;nzStars.position.y=-40;scene.add(nzStars);
 
 // ---------- height grids from the terrain mesh ----------
@@ -295,6 +315,7 @@ const load=n=>fetch('web_assets/'+n+'.json').then(r=>{if(!r.ok)throw 0;return r.
   const bin=atob(j.data),buf=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);
   return new Promise(res=>loader.parse(buf.buffer,'',g=>res(g.scene),()=>res(null)));}).catch(()=>null);
 function fit(obj,size,fallbackColor){
+  if(obj)obj=obj.clone(true);
   if(!obj){const m=new THREE.Mesh(new THREE.BoxGeometry(.5,.35,1),new THREE.MeshStandardMaterial({color:fallbackColor||'#999'}));m.position.y=.175;obj=new THREE.Group();obj.add(m);}
   const box=new THREE.Box3().setFromObject(obj),s=new THREE.Vector3(),c=new THREE.Vector3();box.getSize(s);box.getCenter(c);
   const k=size/Math.max(s.x,s.y,s.z,1e-6);obj.scale.multiplyScalar(k);obj.position.set(-c.x*k,-box.min.y*k,-c.z*k);
@@ -338,6 +359,7 @@ function heightProfile(sp,mode,arrive,step,roadZ){
 
 // ---------- timeline ----------
 const legs=[];let TOTAL=0,ROUTES={};
+const overviewRoads=new THREE.Group();scene.add(overviewRoads);overviewRoads.visible=false;
 function buildTimeline(){
   const tubes=new THREE.Group();scene.add(tubes);
   LEGS.forEach(([day,mode,path,cap,clock,dur,night])=>{
@@ -360,6 +382,7 @@ function buildTimeline(){
           const f=Math.min(1,Math.max(0,(d-cum[k])/((cum[k+1]-cum[k])||1)));roadZ[i]=(elev[k]+(elev[k+1]-elev[k])*f)*EXAG;}}
       heightProfile(sp,mode,mode==='plane'&&day<7,len/n,roadZ);
       L.pts=sp;L.len=len;L.dur=Math.max(1.5,len/MODE[mode].v);
+      if(['car','coach','boat'].includes(mode))overviewRoads.add(chartRoad(sp,mode,canvas));
       const tube=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(sp.map(v=>v.clone().add(new THREE.Vector3(0,.03,0)))),n,mode==='plane'?.03:.03,5),
         new THREE.MeshBasicMaterial({color:MODE[mode].c,transparent:true,opacity:.85}));
       const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(sp.map(v=>v.clone().setY(v.y+.03))),new THREE.LineBasicMaterial({color:MODE[mode].c,transparent:true,opacity:.9}));
@@ -372,9 +395,21 @@ function posOnLeg(L,u){const n=L.pts.length-1,f=u*n,i=Math.min(n-1,Math.floor(f)
   return {p:L.pts[i].clone().lerp(L.pts[i+1],t),d:L.pts[i+1].clone().sub(L.pts[i])};}
 
 // ---------- labels ----------
+const studio=makeMiniatureStudio();
+const models={};
+let inspected=null;
 const labelEls=[];
 function addLabel(world,v,html,cls){const el=document.createElement('div');el.className='label'+(cls?' '+cls:'');el.innerHTML=html;$('labels').appendChild(el);labelEls.push({world,v,el});}
-STOPS.forEach(([n,ll,nights])=>{const p=P(ll[0],ll[1]);addLabel('nz',new THREE.Vector3(p.x,0,p.z),n+'<small>'+nights+'</small>');});
+const stopDays=[1,2,3,4,5,7,10,6,13];
+STOPS.forEach(([name,ll,nights],index)=>{
+  const p=P(ll[0],ll[1]),el=document.createElement('button');
+  el.type='button';el.className='label stop-label';
+  el.setAttribute('aria-label',name+', open day '+stopDays[index]);
+  const detail=document.createElement('small');
+  detail.textContent=/^\d+$/.test(nights)?nights+' '+(nights==='1'?'night':'nights'):nights;
+  el.append(name,detail);el.onclick=()=>jumpDay(stopDays[index]);
+  $('labels').appendChild(el);labelEls.push({world:'nz',v:new THREE.Vector3(p.x,0,p.z),el});
+});
 addLabel('globe',gv(SIN[0],SIN[1],R*1.01),'Singapore<small>home</small>');
 addLabel('globe',gv(AIR[0],AIR[1],R*1.01),'Christchurch<small>SQ297</small>');
 addLabel('globe',gv(-25,134,R*1.01),'Australia','sea');addLabel('globe',gv(-38,161,R*1.01),'Tasman Sea','sea');addLabel('globe',gv(-3,114,R*1.01),'Indonesia','sea');
@@ -383,26 +418,85 @@ addLabel('globe',gv(-25,134,R*1.01),'Australia','sea');addLabel('globe',gv(-38,1
 const daysEl=$('days');
 DAYS.forEach((D,i)=>{const ms=[...new Set(LEGS.filter(l=>l[0]===i&&!/stay/.test(l[1])).map(l=>MODE[l[1]].name))].join(' · ');
   const li=document.createElement('li');li.innerHTML='<button data-day="'+i+'"><span class="dnum">'+D.w+'<b>'+D.d.split(' ')[0]+'</b></span><span class="dtitle">'+D.t+'<br><span class="modes">'+(ms||'Stay')+'</span></span><span class="dnum">'+(i?i:'✈')+'</span></button>';daysEl.appendChild(li);});
-daysEl.addEventListener('click',e=>{const b=e.target.closest('button');if(b)jumpDay(+b.dataset.day);});
+daysEl.addEventListener('click',e=>{const b=e.target.closest('button');if(b){jumpDay(+b.dataset.day);collapseDays();}});
 let t=0,playing=false,speed=1,follow=true,curLeg=-1,curDay=-1,started=false,vehicles={},gPlane=null,active=null,legChangeT=0,night=0,world='globe',chapterTimer=0;
+function collapseDays(){
+  $('side').dataset.open='false';$('toggle').setAttribute('aria-expanded','false');
+}
+function leaveStudio(){
+  if(!inspected)return;
+  inspected=null;$('places').value='';$('app').classList.remove('inspecting');
+  $('back-day').hidden=true;controls.enablePan=true;
+  camera.clearViewOffset();controls.minDistance=.6;controls.maxDistance=320;controls.maxPolarAngle=Math.PI*.48;
+  curDay=-1;
+}
+function markFollow(value){follow=value;$('follow').setAttribute('aria-pressed',String(value));}
+function showRoute(){
+  needsDraw=true;
+  leaveStudio();setPlaying(false);markFollow(false);started=false;t=0;curLeg=curDay=-1;night=0;
+  if(active){active.visible=false;active=null;}
+  setWorld('nz');overview();
+  $('app').classList.add('atlas-overview');$('chapter').classList.remove('show');$('sub').classList.remove('on');
+  $('leg').textContent='14 days · 2,082 km by car';$('ctitle').textContent='Our route';
+  $('ctext').textContent='Select a stop on the map, explore a landmark or play the trip from Singapore.';
+  $('scrub').value=0;$('clock').textContent='14 days';
+  daysEl.querySelectorAll('button').forEach(b=>b.removeAttribute('aria-current'));
+  legs.forEach(L=>{if(L.tube){L.tube.material.opacity=.82;L.line.material.opacity=.95;}});
+}
+function openPlace(key){
+  const place=atlasPlaces.find(p=>p.key===key);
+  if(!place||!models[place.asset])return false;
+  needsDraw=true;
+  setPlaying(false);started=false;markFollow(false);setWorld('nz');inspected=place;
+  collapseDays();showDay(place.day);$('app').classList.remove('atlas-overview');$('app').classList.add('inspecting');
+  $('places').value=key;$('leg').textContent='Day '+place.day+' · '+place.location;
+  $('ctitle').textContent=place.title;$('ctext').textContent=place.text+' Drag or use arrow keys to orbit.';
+  $('back-day').hidden=false;$('back-day').textContent='Follow day '+place.day;
+  const leg=legs.find(l=>l.day===place.day);t=leg.start+.001;$('scrub').value=Math.round(1000*t/TOTAL);
+  resize();studio.show(models[place.asset],place,camera,controls);return true;
+}
+$('places').onchange=e=>{if(e.target.value)openPlace(e.target.value);else showRoute();};
+$('back-day').onclick=()=>{if(inspected)jumpDay(inspected.day);};
+canvas.addEventListener('keydown',event=>{
+  if(!inspected&&!$('app').classList.contains('atlas-overview'))return;
+  const orbit=new THREE.Spherical().setFromVector3(camera.position.clone().sub(controls.target));
+  switch(event.key){
+    case 'ArrowLeft': orbit.theta-=.12;break;
+    case 'ArrowRight': orbit.theta+=.12;break;
+    case 'ArrowUp': orbit.phi-=.10;break;
+    case 'ArrowDown': orbit.phi+=.10;break;
+    case '+': case '=': orbit.radius*=.88;break;
+    case '-': orbit.radius/=.88;break;
+    default:return;
+  }
+  event.preventDefault();
+  orbit.phi=THREE.MathUtils.clamp(orbit.phi,.05,controls.maxPolarAngle);
+  orbit.radius=THREE.MathUtils.clamp(orbit.radius,controls.minDistance,controls.maxDistance);
+  camera.position.setFromSpherical(orbit).add(controls.target);controls.update();
+});
 function setPlaying(p){playing=p;$('play').textContent=p?'Pause':'Play';document.body.classList.toggle('rolling',p);}
-$('play').onclick=()=>{if(!legs.length)return;if(!started){started=true;follow=true;$('follow').setAttribute('aria-pressed','true');chapter('Departure · Tue 24 Aug 2027','Singapore → Christchurch','SQ297 from Changi T3 at 19:50');}if(t>=TOTAL)t=0;setPlaying(!playing);};
+$('play').onclick=()=>{if(!legs.length)return;if(inspected)jumpDay(inspected.day);$('app').classList.remove('atlas-overview');if(!started){started=true;follow=true;$('follow').setAttribute('aria-pressed','true');chapter('Departure · Tue 24 Aug 2027','Singapore → Christchurch','SQ297 from Changi T3 at 19:50');}if(t>=TOTAL)t=0;setPlaying(!playing);};
 $('speed').onclick=()=>{speed=speed===1?2:speed===2?4:speed===4?.5:1;$('speed').textContent=speed+'×';};
-$('follow').onclick=()=>{follow=!follow;$('follow').setAttribute('aria-pressed',String(follow));if(follow)snapCam();else overview();};
-$('overview').onclick=()=>{follow=false;$('follow').setAttribute('aria-pressed','false');overview();};
+$('follow').onclick=()=>{if(inspected){jumpDay(inspected.day);return;}if(!started){jumpDay(0);return;}follow=!follow;$('follow').setAttribute('aria-pressed',String(follow));if(follow)snapCam();else overview();};
+$('overview').onclick=()=>{if(legs.length)showRoute();};
 $('prev').onclick=()=>jumpDay(Math.max(0,(curDay<0?0:curDay)-1));
 $('next').onclick=()=>jumpDay(Math.min(14,(curDay<0?0:curDay)+1));
-$('scrub').oninput=e=>{if(!legs.length)return;started=true;t=TOTAL*e.target.value/1000;};
+$('scrub').oninput=e=>{if(!legs.length)return;leaveStudio();$('app').classList.remove('atlas-overview');if(!started)markFollow(true);started=true;t=TOTAL*e.target.value/1000;};
 $('toggle').onclick=()=>{const s=$('side'),o=s.dataset.open!=='true';s.dataset.open=String(o);$('toggle').setAttribute('aria-expanded',String(o));
   if(o){const cur=daysEl.querySelector('[aria-current="true"]');if(cur)cur.scrollIntoView({block:'center'});}};
-function jumpDay(d){if(!legs.length)return;if(!started){$('chapter').classList.remove('show');}started=true;const L=legs.find(l=>l.day===d);if(L){t=L.start+.001;curLeg=-1;if(follow)requestAnimationFrame(snapCam);}}
+function jumpDay(d){if(!legs.length)return;leaveStudio();$('app').classList.remove('atlas-overview');markFollow(true);if(!started){$('chapter').classList.remove('show');}started=true;const L=legs.find(l=>l.day===d);if(L){t=L.start+.001;curLeg=-1;if(follow)requestAnimationFrame(snapCam);}}
 function setWorld(w){if(w===world)return;world=w;
   if(w==='globe'){controls.minDistance=R*1.08;controls.maxDistance=80;controls.maxPolarAngle=Math.PI;}
-  else{controls.minDistance=.6;controls.maxDistance=160;controls.maxPolarAngle=Math.PI*.48;}
+  else{controls.minDistance=.6;controls.maxDistance=320;controls.maxPolarAngle=Math.PI*.48;}
   if(follow)snapCam();else overview();}
 function overview(){
   if(world==='globe'){controls.target.set(0,0,0);const mid=gv(-22,140,1).normalize();camera.position.copy(mid.multiplyScalar(R*2.9));}
-  else{const wide=innerWidth>820;controls.target.set(wide?-8:-4,0,wide?-1:8);camera.position.set(wide?-14:-4,wide?78:105,wide?62:78);}
+  else{
+    const aspect=canvas.clientWidth/canvas.clientHeight;
+    const distance=Math.max(92,78/(2*Math.tan(camera.fov*Math.PI/360)*aspect));
+    controls.target.set(aspect<1?-1:-7,0,aspect<1?9:4);
+    camera.position.set(-.13,.78,.62).normalize().multiplyScalar(distance).add(controls.target);
+  }
 }
 function chapter(k,title,sub){$('chK').textContent=k;$('chT').textContent=title;$('chS').textContent=sub;$('chapter').classList.add('show');chapterTimer=2.8;}
 function showDay(d){if(d===curDay)return;curDay=d;const D=DAYS[d];
@@ -455,7 +549,7 @@ function frame(){
     if(li!==curLeg){curLeg=li;legChangeT=0;$('leg').textContent=MODE[L.mode].name+(L.km?' · '+L.km+' km':'');$('sub').textContent=L.cap;$('sub').classList.add('on');$('stamp').textContent=stampFor(L);setWorld(L.world);}
     legChangeT+=dt;showDay(L.day);
     // dip to black around globe <-> island cuts
-    legs.forEach((M,i)=>{if(i&&M.world!==legs[i-1].world){const d=Math.abs(t-M.start);if(d<.6)fade=Math.max(fade,1-d/.6);}});
+    legs.forEach((M,i)=>{if(i&&M.world!==legs[i-1].world){const d=Math.abs(t-M.start);if(playing&&d<.6)fade=Math.max(fade,1-d/.6);}});
     let target;const u=Math.min(1,(t-L.start)/L.dur);
     if(/stay/.test(L.mode)){target=L.at;}
     else{
@@ -478,33 +572,46 @@ function frame(){
   if(chapterTimer>0){chapterTimer-=dt;if(chapterTimer<=0)$('chapter').classList.remove('show');}
   $('fade').style.opacity=fade.toFixed(3);
   skyCol.copy(DAY).lerp(NIGHT,night);scene.fog.color.copy(skyCol);nzStars.material.opacity=night;hemi.intensity=.9-.6*night;sun.intensity=1.1-.85*night;
-  controls.update();renderer.render(world==='globe'?gScene:scene,camera);
+  overviewRoads.visible=!started&&!inspected&&world==='nz';
+  controls.update();
+  if(!started&&!needsDraw){requestAnimationFrame(frame);return;}
+  needsDraw=false;renderer.render(inspected?studio.scene:world==='globe'?gScene:scene,camera);
   const w=canvas.clientWidth,h=canvas.clientHeight,camDir=camera.position.clone().normalize();
-  labelEls.forEach(l=>{let vis=l.world===world;
+  const placed=[];
+  labelEls.forEach(l=>{let vis=!inspected&&l.world===world;
     if(vis){tmp.copy(l.v).project(camera);vis=tmp.z<1&&Math.abs(tmp.x)<1.1&&Math.abs(tmp.y)<1.1;
       if(vis&&world==='globe')vis=l.v.clone().normalize().dot(camDir)>.25;}
+    if(vis&&world==='nz'){
+      const x=(tmp.x+1)*w/2,y=(1-tmp.y)*h/2,half=5+l.el.textContent.length*3.2;
+      vis=!placed.some(p=>Math.abs(p.y-y)<22&&Math.abs(p.x-x)<p.half+half);
+      if(vis)placed.push({x,y,half});
+    }
     l.el.style.display=vis?'block':'none';
     if(vis)l.el.style.transform='translate('+((tmp.x+1)/2*w)+'px,'+((1-tmp.y)/2*h)+'px) translate(-50%,-140%)';});
   requestAnimationFrame(frame);
 }
-function resize(){const w=canvas.clientWidth,h=canvas.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+function resize(){const w=canvas.clientWidth,h=canvas.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;needsDraw=true;
+  if(inspected){camera.setViewOffset(w,h,w>820?-105:0,h*.015,w,h);}
+  else if($('app').classList.contains('atlas-overview'))overview();
+  camera.updateProjectionMatrix();}
 addEventListener('resize',resize);
 
 // ---------- boot ----------
 (async function(){
-  resize();world='nz';setWorld('globe');overview();requestAnimationFrame(frame);
-  const names=['terrain_south_island','car','coach','helicopter','boat','plane','church_stone','observatory','lone_tree','hot_tub','mosque','city','glowworm_cave','ski_lift','glacier_ice','pine_tree','beech_tree','sheep','pin'];
+  resize();setWorld('nz');overview();requestAnimationFrame(frame);
+  const names=['terrain_south_island','car','coach','helicopter','boat','plane','church_stone','observatory','lone_tree','hot_tub','mosque','city','glowworm_cave','ski_lift','glacier_ice','pine_tree','beech_tree','sheep','pin','hooker_valley'];
   const [routes,...scenes]=await Promise.all([fetch('web_assets/routes.json').then(r=>r.json()).catch(()=>null)].concat(names.map(load)));
   ROUTES=routes?routes.routes:{};
-  const A={};scenes.forEach((s,i)=>A[names[i]]=s);
+  const A=models;scenes.forEach((s,i)=>A[names[i]]=s);
   if(A.terrain_south_island){const ter=A.terrain_south_island;scene.add(ter);
-    ter.traverse(o=>{if(!o.isMesh)return;const lake=/lake/i.test(o.name)||/lake/i.test(o.parent&&o.parent.name||'');raster(o,lake?water:land);});}
+    ter.traverse(o=>{if(!o.isMesh)return;const lake=/lake/i.test(o.name)||/lake/i.test(o.parent&&o.parent.name||'');raster(o,lake?water:land);});shadeCoast(sea,G,land);}
   buildTimeline();
   [['car','car'],['coach','coach'],['helicopter','heli'],['boat','boat'],['plane','plane']].forEach(([f,m])=>{
     const v=fit(A[f],MODE[m].len,MODE[m].c);v.visible=false;scene.add(v);vehicles[m]=v;
     v.traverse(o=>{if(o.name==='Rotor')v.userData.rotor=o;if(o.name==='TailRotor')v.userData.tail=o;});});
   gPlane=fit(A.plane?A.plane.clone(true):null,.55,'#fff');gPlane.visible=false;gScene.add(gPlane);
   const place=(name,ll,size,col)=>{const p=P(ll[0],ll[1]);const o=fit(A[name],size,col);o.position.set(p.x,H(p.x,p.z),p.z);scene.add(o);};
+  place('hooker_valley',[-43.72,170.10],.72,'#8b9b83');
   place('city',[-43.532,172.636],.7,'#ccc');place('mosque',[-43.545,172.56],.26,'#eee');place('church_stone',[-44.015,170.50],.22,'#a98');
   place('observatory',[-43.975,170.455],.22,'#ddd');place('lone_tree',[-44.693,169.115],.2,'#7a6');place('glowworm_cave',[-45.285,167.645],.26,'#556');
   place('hot_tub',[-44.985,168.66],.2,'#a86');place('ski_lift',[-44.92,168.745],.4,'#ddd');place('glacier_ice',[-43.505,170.30],.6,'#cdeffa');
@@ -525,9 +632,12 @@ addEventListener('resize',resize);
   }
   $('status').hidden=true;
   if(!routes){$('status').hidden=false;$('status').textContent='Road routes failed to load. Drives are missing.';}
-  showDay(0);
+  atlasPlaces.filter(p=>models[p.asset]).forEach(p=>$('places').add(new Option(p.location+' · '+p.title,p.key)));
+  $('places').disabled=$('places').options.length===1;
+  if(!A.terrain_south_island){$('status').hidden=false;$('status').textContent='Terrain could not load. Reload to try again.';}
+  showRoute();
   // deep links from the summary page: #day-0 … #day-14
-  const fromHash=()=>{const m=/^#day-(\d{1,2})$/.exec(location.hash);if(m&&+m[1]<=14){jumpDay(+m[1]);showDay(+m[1]);}};
+  const fromHash=()=>{const place=/^#place-([a-z]+)$/.exec(location.hash);if(place&&openPlace(place[1]))return;const m=/^#day-(\d{1,2})$/.exec(location.hash);if(m&&+m[1]<=14){jumpDay(+m[1]);showDay(+m[1]);}};
   addEventListener('hashchange',fromHash);fromHash();
 })();
 })();

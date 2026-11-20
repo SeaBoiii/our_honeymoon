@@ -11,11 +11,14 @@ A 14-day self-drive honeymoon from Singapore to Aotearoa (24 Aug – 7 Sep 2027)
 | [3D vlog, Claude cut](https://seaboiii.github.io/our_honeymoon/claude-cut/) | The same trip with Claude-built terrain, vehicles and landmarks, plus shadows, ripples on the sea and topographic contours |
 
 Deep links open a 3D page at a given day, e.g. `/3d/#day-6` for Milford Sound.
+The primary map also opens four orbitable Blender miniatures via `#place-valley`,
+`#place-chapel`, `#place-cruise` and `#place-helicopter`. Each connects to its travel day.
 
 ## Repository layout
 
 ```
 honeymoon.html         summary page source
+atlas/                 shared web styles, Blender illustrations, fonts and three.js r147
 itinerary.md           the day-by-day plan as text
 map3d/                 3D vlog (Codex assets)
   index.html             three.js app
@@ -37,7 +40,8 @@ python -I map3d/tools/fetch_elevation.py       # LINZ 8 m DEM grid + road elevat
 python -I map3d/tools/make_coastline.py <land-10m.json> <ne_10m_lakes.geojson>
 python -I map3d/tools/fit_coast_to_roads.py    # make sure every road sits on land
 python -I map3d/tools/fill_dem_gaps.py
-# then run the Blender scripts inside Blender, re-wrap the GLBs, and:
+# then run the Blender scripts inside Blender as described in map3d/blender/README.md
+python map3d/tools/build_atlas_art.py          # package the atlas plates (Pillow + NumPy)
 sh build_site.sh
 ```
 
