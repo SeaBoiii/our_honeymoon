@@ -1,0 +1,11 @@
+# personal / private — kept offline
+flights.md
+codex-research-raw.md
+hotels-research.md
+
+# local-only build output and tooling
+map3d/preview/
+*.blend
+*.blend1
+.claude/
+__pycache__/

@@ -1,0 +1,306 @@
+[
+  {
+    "file": "terrain_south_island.glb",
+    "root": "Terrain",
+    "triangles": 133128,
+    "bbox_min": [
+      -32.280247,
+      -36.501827,
+      0.025
+    ],
+    "bbox_max": [
+      45.044998,
+      38.950867,
+      2.9792
+    ],
+    "notes": "Procedural elevation; hand-digitised geographic rings; separate water surfaces."
+  },
+  {
+    "file": "car.glb",
+    "root": "Car",
+    "triangles": 600,
+    "bbox_min": [
+      -1.086817,
+      -2.25,
+      -0.0
+    ],
+    "bbox_max": [
+      1.086817,
+      2.25,
+      2.032723
+    ],
+    "notes": "Compact SUV, ski rack; +Y forward."
+  },
+  {
+    "file": "coach.glb",
+    "root": "Coach",
+    "triangles": 872,
+    "bbox_min": [
+      -0.632193,
+      -2.25,
+      -0.0
+    ],
+    "bbox_max": [
+      0.632193,
+      2.25,
+      1.392285
+    ],
+    "notes": "Generic white touring coach; +Y forward."
+  },
+  {
+    "file": "helicopter.glb",
+    "root": "Helicopter",
+    "triangles": 728,
+    "bbox_min": [
+      -1.838521,
+      -2.25,
+      0.0
+    ],
+    "bbox_max": [
+      1.838521,
+      2.25,
+      1.742218
+    ],
+    "notes": "Rotor local Z; TailRotor local X; +Y forward."
+  },
+  {
+    "file": "boat.glb",
+    "root": "Boat",
+    "triangles": 680,
+    "bbox_min": [
+      -0.906716,
+      -2.25,
+      0.0
+    ],
+    "bbox_max": [
+      0.906716,
+      2.25,
+      2.384328
+    ],
+    "notes": "Two-deck fiord cruise boat; +Y forward."
+  },
+  {
+    "file": "plane.glb",
+    "root": "Plane",
+    "triangles": 892,
+    "bbox_min": [
+      -2.053691,
+      -2.25,
+      0.0
+    ],
+    "bbox_max": [
+      2.053691,
+      2.25,
+      1.409396
+    ],
+    "notes": "Generic twin-jet wide-body; +Y forward."
+  },
+  {
+    "file": "church_stone.glb",
+    "root": "StoneChurch",
+    "triangles": 232,
+    "bbox_min": [
+      -0.34,
+      -0.481,
+      0.0
+    ],
+    "bbox_max": [
+      0.34,
+      0.481,
+      1.0
+    ],
+    "notes": "Stone lakeside chapel and bell tower."
+  },
+  {
+    "file": "observatory.glb",
+    "root": "Observatory",
+    "triangles": 434,
+    "bbox_min": [
+      -0.5,
+      -0.5,
+      0.0
+    ],
+    "bbox_max": [
+      0.5,
+      0.5,
+      0.858778
+    ],
+    "notes": "Telescope dome and slit."
+  },
+  {
+    "file": "lone_tree.glb",
+    "root": "LoneTree",
+    "triangles": 802,
+    "bbox_min": [
+      -0.436019,
+      -0.417062,
+      0.0
+    ],
+    "bbox_max": [
+      0.436019,
+      0.417062,
+      1.0
+    ],
+    "notes": "Willow in shallow water."
+  },
+  {
+    "file": "hot_tub.glb",
+    "root": "HotTub",
+    "triangles": 772,
+    "bbox_min": [
+      -0.5,
+      -0.409091,
+      0.0
+    ],
+    "bbox_max": [
+      0.5,
+      0.409091,
+      0.702273
+    ],
+    "notes": "Cedar tub for two on a cliff deck."
+  },
+  {
+    "file": "mosque.glb",
+    "root": "Mosque",
+    "triangles": 530,
+    "bbox_min": [
+      -0.445545,
+      -0.371287,
+      0.0
+    ],
+    "bbox_max": [
+      0.445545,
+      0.371287,
+      1.0
+    ],
+    "notes": "Generic dome and one minaret."
+  },
+  {
+    "file": "city.glb",
+    "root": "City",
+    "triangles": 1212,
+    "bbox_min": [
+      -0.5,
+      -0.5,
+      0.0
+    ],
+    "bbox_max": [
+      0.5,
+      0.5,
+      0.5175
+    ],
+    "notes": "Twelve buildings and street."
+  },
+  {
+    "file": "glowworm_cave.glb",
+    "root": "Cave",
+    "triangles": 620,
+    "bbox_min": [
+      -0.5,
+      -0.486692,
+      0.0
+    ],
+    "bbox_max": [
+      0.5,
+      0.486692,
+      0.71667
+    ],
+    "notes": "Cave arch, small boat, emissive glow points."
+  },
+  {
+    "file": "ski_lift.glb",
+    "root": "SkiLift",
+    "triangles": 356,
+    "bbox_min": [
+      -0.5,
+      -0.316667,
+      0.0
+    ],
+    "bbox_max": [
+      0.5,
+      0.316667,
+      0.700437
+    ],
+    "notes": "Three towers, cable and hanging chairs."
+  },
+  {
+    "file": "glacier_ice.glb",
+    "root": "GlacierIce",
+    "triangles": 640,
+    "bbox_min": [
+      -0.421841,
+      -0.5,
+      0.0
+    ],
+    "bbox_max": [
+      0.421841,
+      0.5,
+      0.449761
+    ],
+    "notes": "Faceted ice tongue and open crevasses."
+  },
+  {
+    "file": "pine_tree.glb",
+    "root": "PineTree",
+    "triangles": 108,
+    "bbox_min": [
+      -0.344086,
+      -0.344086,
+      0.0
+    ],
+    "bbox_max": [
+      0.344086,
+      0.344086,
+      1.0
+    ],
+    "notes": "Conifer."
+  },
+  {
+    "file": "beech_tree.glb",
+    "root": "BeechTree",
+    "triangles": 394,
+    "bbox_min": [
+      -0.414474,
+      -0.378927,
+      0.0
+    ],
+    "bbox_max": [
+      0.414474,
+      0.378927,
+      1.0
+    ],
+    "notes": "Rounded native tree."
+  },
+  {
+    "file": "sheep.glb",
+    "root": "Sheep",
+    "triangles": 296,
+    "bbox_min": [
+      -0.27173,
+      -0.5,
+      0.0
+    ],
+    "bbox_max": [
+      0.27173,
+      0.5,
+      0.703704
+    ],
+    "notes": "Wool body, dark head and four legs."
+  },
+  {
+    "file": "pin.glb",
+    "root": "Pin",
+    "triangles": 384,
+    "bbox_min": [
+      -0.349245,
+      -0.065,
+      0.0
+    ],
+    "bbox_max": [
+      0.349245,
+      0.065,
+      1.0
+    ],
+    "notes": "Accent-red map pin with an actual heart-shaped aperture."
+  }
+]
