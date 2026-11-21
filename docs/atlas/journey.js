@@ -3,7 +3,7 @@ const airportRunways=[
   [[-43.497614,172.522113],[-43.474966,172.548293]],
   [[-43.484272,172.524408],[-43.494366,172.540878]]
 ];
-function addChristchurchAirport(scene, project, terrain){
+function addChristchurchAirport(scene, project, terrain, runwayScale=1){
   const runways=airportRunways.map(pair=>pair.map(ll=>project(...ll)));
   const airfield=new THREE.Group();airfield.name='Christchurch Airport';
   function pavement(a,b,width,color,offset){
@@ -22,8 +22,8 @@ function addChristchurchAirport(scene, project, terrain){
   }
   for(const [a,b] of runways){
     const point=t=>({x:a.x+t*(b.x-a.x),z:a.z+t*(b.z-a.z)});
-    pavement(a,b,.008,'#4f5552',1);
-    for(let i=1;i<33;i++)pavement(point(i/34),point((i+.43)/34),.00046,'#f2edce',2);
+    pavement(a,b,.008*runwayScale,'#4f5552',1);
+    for(let i=1;i<33;i++)pavement(point(i/34),point((i+.43)/34),.00046*runwayScale,'#f2edce',2);
   }
   const terminal=project(-43.48836,172.53970);
   const origin=new THREE.Group();origin.rotation.y=-.66;origin.position.set(terminal.x,terrain.height(terminal.x,terminal.z)??0,terminal.z);

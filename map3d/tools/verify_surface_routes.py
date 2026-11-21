@@ -16,7 +16,7 @@ ROOT=Path(__file__).resolve().parents[2]
 def xy(p):
     lon,lat=p
     return ((lon-170.5)*8.008,-(lat+44)*11.132)
-def measure(tracks):
+def measure(tracks, itinerary=False):
     data=json.loads((ROOT/'map3d/blender/data/coastline.json').read_bytes())
     mainland=Polygon([xy(p) for p in data['land'][0]['ring']])
     lakes={l['name']:Polygon([xy(p) for p in l['ring']],[[xy(p) for p in ring] for ring in l.get('islands',[])]) for l in data['lakes']}
@@ -27,8 +27,9 @@ def measure(tracks):
             points=list(ring.coords)
             edges.extend(zip(points,points[1:]))
     tree=STRtree(shapely.linestrings(np.asarray(edges)))
-    fleet=json.loads((ROOT/'atlas/vehicle-dimensions.json').read_bytes());metre=fleet['mapUnitsPerMetre']
-    assert len(tracks)==21,'expected 17 driving legs and four cruise legs'
+    fleet=json.loads((ROOT/'atlas/vehicle-dimensions.json').read_bytes());metre=fleet['itineraryUnitsPerMetre' if itinerary else 'mapUnitsPerMetre']
+    road_metre=fleet['itineraryRoadUnitsPerMetre'] if itinerary else metre
+    assert len(tracks)==(6 if itinerary else 21),'unexpected number of surface legs'
     for track in tracks:
         mode,day=track['mode'],track['day']
         p=np.asarray(track['points'])
@@ -42,7 +43,7 @@ def measure(tracks):
         length,width=metre*vehicle['length']*.5,metre*vehicle['width']*.5
         radius=math.hypot(length,width)
         if mode!='boat':
-            assert np.min(clearance)>2.95*metre*1.09,('road shoulder crosses shoreline',track['caption'])
+            assert np.min(clearance)>2.95*road_metre*1.09,('road shoulder crosses shoreline',track['caption'])
         for i in np.flatnonzero(clearance<radius):
             # The whole rectangle sweeps between the two poses. A circumscribed disk
             # is unnecessarily wide on a long coach travelling parallel to the shore.
@@ -64,7 +65,10 @@ def measure(tracks):
             assert track['angular']<3.,(day,mode,'excessive angular step')
         print(f'Day {day:2} {mode:5} | {len(p):5} points | full body and shoreline clear')
 if __name__=='__main__':
-    if len(sys.argv)>1:tracks=json.loads(Path(sys.argv[1]).read_bytes())
+    if len(sys.argv)>1:
+        measure(json.loads(Path(sys.argv[1]).read_bytes()))
     else:
-        tracks=json.loads(subprocess.check_output(['node',str(Path(__file__).with_name('sample_surface_routes.cjs'))],cwd=ROOT))
-    measure(tracks)
+        sample=['node',str(Path(__file__).with_name('sample_surface_routes.cjs'))]
+        for itinerary in (False,True):
+            args=sample+(['--itinerary'] if itinerary else [])
+            measure(json.loads(subprocess.check_output(args,cwd=ROOT)),itinerary)

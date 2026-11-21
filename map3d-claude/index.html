@@ -113,7 +113,7 @@ body.rolling #rec i{opacity:1;animation:blink 1.2s steps(2) infinite}
 
   <aside id="side" class="glass" data-open="false">
     <header>
-      <div><span class="sub">24 Aug – 7 Sep 2027 · Claude cut</span><h1>The South Island loop</h1><a class="itin" href="https://claude.ai/artifact/U9TV22y5gkKzKZtULwJ8xp" target="_blank" rel="noopener">← Itinerary and stays</a></div>
+      <div><span class="sub">24 Aug – 7 Sep 2027 · Claude cut</span><h1>The South Island loop</h1><a class="itin" href="https://claude.ai/artifact/U9TV22y5gkKzKZtULwJ8xp" target="_blank" rel="noopener">← Itinerary and stays</a> <a class="itin tour-switch" id="tour-switch" href="?tour=drive">Full driving tour</a></div>
       <button class="btn" id="toggle" aria-expanded="false" aria-controls="days">Days</button>
     </header>
     <ol id="days"></ol>
@@ -149,6 +149,7 @@ body.rolling #rec i{opacity:1;animation:blink 1.2s steps(2) infinite}
 <script src="../atlas/surface-travel.js"></script>
 <script src="../atlas/scenery.js"></script>
 <script src="../atlas/journey.js"></script>
+<script src="../atlas/itinerary.js"></script>
 <script src="../atlas/landscape.js"></script>
 <script src="../atlas/assets.js"></script>
 <script src="../atlas/relief.js"></script>
@@ -374,6 +375,15 @@ function heightProfile(sp,mode,arrive,step){
 }
 
 // ---------- timeline ----------
+const fullDrive=fullDriveRequested(),tourSwitch=$('tour-switch');
+$('app').classList.toggle('itinerary-tour',!fullDrive);
+tourSwitch.textContent=fullDrive?'Itinerary highlights':'Full driving tour';
+function linkOtherTour(day){
+  const url=new URL(location.href);url.searchParams.set('tour',fullDrive?'itinerary':'drive');
+  url.hash=day>=0?'day-'+day:'';tourSwitch.href=url.href;
+}
+linkOtherTour(-1);
+let routeLegs=[],landmarkSites=new Map(),parkedCar=null;
 const drawInset=routeInset($('route-inset'));
 const legs=[];let TOTAL=0,ROUTES={},CRUISES={},fleet;
 const overviewRoads=new THREE.Group();scene.add(overviewRoads);
@@ -397,7 +407,7 @@ function buildTimeline(){
       if(boat){
         const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(L.pts),new THREE.LineBasicMaterial({color:'#6cabae',transparent:true,opacity:.6}));
         tubes.add(line);
-      }else tubes.add(SurfaceTravel.ribbon(L.travel,fleet.mapUnitsPerMetre,terrainSurface));
+      }else tubes.add(SurfaceTravel.ribbon(L.travel,fullDrive?fleet.mapUnitsPerMetre:fleet.itineraryRoadUnitsPerMetre,terrainSurface));
       overviewRoads.add(chartRoad(boat?L.pts:SurfaceTravel.groundLine(L.travel.roadSamples.map(i=>L.pts[i]),terrainSurface),mode,canvas));
     }
     else{
@@ -415,7 +425,8 @@ function buildTimeline(){
     L.start=TOTAL;TOTAL+=L.dur+(L.travel||/stay/.test(mode)?0:.35);legs.push(L);
   });
 }
-function posOnLeg(L,u){if(L.travel)return SurfaceTravel.pose(L.travel,u);const n=L.pts.length-1;
+function posOnLeg(L,u){if(L.from!==undefined)u=THREE.MathUtils.lerp(L.from,L.to,THREE.MathUtils.clamp(u,0,1));
+  if(L.travel)return SurfaceTravel.pose(L.travel,u);const n=L.pts.length-1;
   if(L.mode==='plane'){
     const inbound=L.day===1,v=inbound?u:1-u;
     const arrival=1-(1-v)**3;
@@ -448,7 +459,7 @@ $('next').onclick=()=>jumpDay(Math.min(14,(curDay<0?0:curDay)+1));
 $('scrub').oninput=e=>{if(!legs.length)return;started=true;t=TOTAL*e.target.value/1000;curLeg=-1;};
 $('toggle').onclick=()=>{const s=$('side'),o=s.dataset.open!=='true';s.dataset.open=String(o);$('toggle').setAttribute('aria-expanded',String(o));
   if(o){const cur=daysEl.querySelector('[aria-current="true"]');if(cur)cur.scrollIntoView({block:'center'});}};
-function jumpDay(d){if(!legs.length)return;follow=true;$('follow').setAttribute('aria-pressed','true');if(!started){$('chapter').classList.remove('show');}started=true;const L=legs.find(l=>l.day===d);if(L){t=L.start+.001;curLeg=-1;}}
+function jumpDay(d){if(!legs.length)return;follow=true;$('follow').setAttribute('aria-pressed','true');if(!started){$('chapter').classList.remove('show');}started=true;const L=(!fullDrive&&legs.find(l=>l.day===d&&l.mode==='stay'))||legs.find(l=>l.day===d);if(L){t=L.start+.001;curLeg=-1;}}
 function setWorld(w){if(w===world)return;world=w;
   if(w==='globe'){controls.minDistance=1.6;controls.maxDistance=80;controls.maxPolarAngle=Math.PI;}
   else{controls.minDistance=.008;controls.maxDistance=160;controls.maxPolarAngle=Math.PI*.48;}
@@ -458,18 +469,19 @@ function overview(){
   else{const wide=innerWidth>820;controls.target.set(wide?-8:-4,0,wide?-1:8);camera.position.set(wide?-14:-4,wide?78:105,wide?62:78);}
 }
 function chapter(k,title,sub){$('chK').textContent=k;$('chT').textContent=title;$('chS').textContent=sub;$('chapter').classList.add('show');chapterTimer=2.8;}
-function showDay(d){if(d===curDay)return;curDay=d;const D=DAYS[d];
+function showDay(d){if(d===curDay)return;linkOtherTour(d);curDay=d;const D=DAYS[d];
   $('ctitle').textContent=(d?'Day '+d+' · ':'')+D.t;$('ctext').textContent=D.x;$('cfood').textContent='Halal: '+D.f;$('cstay').textContent='Tonight: '+NIGHTS[d];$('clock').textContent=D.w+' '+D.d;
   daysEl.querySelectorAll('button').forEach(b=>b.setAttribute('aria-current',String(+b.dataset.day===d)));
   const cur=daysEl.querySelector('[aria-current="true"]');if(cur)cur.scrollIntoView({block:'nearest'});
-  if(started&&playing)chapter(d?'Day '+d+' · '+D.w+' '+D.d:'Departure · '+D.w+' '+D.d,D.t,D.x.split('. ')[0].replace(/\.$/,''));
+  if(fullDrive&&started&&playing)chapter(d?'Day '+d+' · '+D.w+' '+D.d:'Departure · '+D.w+' '+D.d,D.t,D.x.split('. ')[0].replace(/\.$/,''));
 }
 function stampFor(L){const D=DAYS[L.day],place=L.world==='globe'?(L.mode==='gstay'?'SINGAPORE':'SQ'+(L.day?'298':'297')+' · IN FLIGHT'):'NEW ZEALAND';
-  return (L.day?'DAY '+String(L.day).padStart(2,'0')+' · ':'')+D.w.toUpperCase()+' '+D.d.toUpperCase()+' 2027 · '+L.clock+' · '+place;}
+  return (L.day?'DAY '+String(L.day).padStart(2,'0')+' · ':'')+D.w.toUpperCase()+' '+D.d.toUpperCase()+' 2027'+(L.clock?' · '+L.clock:'')+' · '+place;}
 
 // ---------- camera ----------
 const tmp=new THREE.Vector3(),lastTarget=new THREE.Vector3(),camT=new THREE.Vector3(),UP=new THREE.Vector3(0,1,0),ghost=new THREE.Object3D();
 function followDistance(L){
+  if(L.viewDistance)return L.viewDistance*Math.max(1,1/camera.aspect);
   if(L.travel)return L.travel.boat?.28:Math.min(.25,.135+.006*Math.sqrt(L.km||1));
   return L.mode==='plane'?.43:L.mode==='heli'?.15:1.65;
 }
@@ -483,7 +495,8 @@ function snapCam(){
     camera.position.copy(p).addScaledVector(up,5.8).addScaledVector(side,-1.6);
   }else {
     const distance=followDistance(L);
-    camera.position.copy(p).addScaledVector(new THREE.Vector3(-.45,.78,.78).normalize(),distance);
+    const angle=L.site ? new THREE.Vector3(-.45,.50,.98) : new THREE.Vector3(-.45,.78,.78);
+    camera.position.copy(p).addScaledVector(angle.normalize(),distance);
     if(L.travel)chooseValleyView(terrainSurface,p,camera.position,distance);
   }
   camera.lookAt(p);
@@ -529,6 +542,13 @@ function frame(){
     const previous=legs[curLeg],resetView=!previous||L.cut||previous.mode!==L.mode;
     if(changed){for(const leg of legs){if(leg.flightPath)leg.flightPath.visible=leg===L;}curLeg=li;legChangeT=0;$('leg').textContent=MODE[L.mode].name+(L.km?' · '+L.km+' km':'');$('sub').textContent=L.cap;$('sub').classList.add('on');$('stamp').textContent=stampFor(L);setWorld(L.world);if(follow&&resetView)snapCam();}
     legChangeT+=dt;showDay(L.day);
+    if(changed&&!fullDrive){
+      $('leg').textContent=L.title;$('ctext').textContent=L.cap;
+      if(parkedCar){
+        const park=L.site==='church_stone'||L.site==='mosque';
+        parkedCar.visible=park&&parkBesideLandmark(parkedCar,landmarkSites.get(L.site),fleet.vehicles.car,fleet.mapUnitsPerMetre,terrainSurface,lakeSurface,camera.position);
+      }
+    }
     // dip to black around globe <-> island cuts
     legs.forEach((M,i)=>{if(M.cut){const d=Math.abs(t-M.start);if(playing&&d<.6)fade=Math.max(fade,1-d/.6);}});
     let target,progress=0;const u=Math.min(1,(t-L.start)/L.dur);
@@ -555,7 +575,7 @@ function frame(){
     if(follow){if(L.world==='globe')followGlobe(L,target,u,dt);else followNZ(L,target,dt,progress);}
     $('scrub').value=Math.round(1000*t/TOTAL);
   }
-  if(!started)drawInset(null);
+  if(!started){drawInset(null);if(parkedCar)parkedCar.visible=false;}
   if(chapterTimer>0){chapterTimer-=dt;if(chapterTimer<=0)$('chapter').classList.remove('show');}
   $('fade').style.opacity=fade.toFixed(3);
   skyCol.copy(DAY).lerp(NIGHT,night);scene.fog.color.copy(skyCol);nzStars.material.opacity=night;hemi.intensity=.9-.6*night;sun.intensity=1.1-.85*night;
@@ -579,7 +599,7 @@ function frame(){
   const viewDistance=camera.position.distanceTo(controls.target);
   overviewRoads.userData.chartScale=viewDistance>5;
   overviewRoads.visible=world==='nz'&&viewDistance>.54;
-  if(world==='nz')for(const group of scenery)group.userData.update(controls.target,viewDistance,camera,follow&&L?.travel?active?.position:null);
+  if(world==='nz')for(const group of scenery)group.userData.update(controls.target,viewDistance,camera,follow?(L?.travel?active?.position:L?.site?L.at:null):null);
   renderer.render(world==='globe'?gScene:scene,camera);
   const w=canvas.clientWidth,h=canvas.clientHeight,camDir=camera.position.clone().normalize();
   const locator=$('locator');
@@ -615,7 +635,7 @@ addEventListener('resize',resize);
     load('sheep','../atlas/distant/'),
     fetch('../atlas/settlements.json').then(r=>r.json()).catch(()=>({areas:[],streets:[],buildings:[]}))
   ]);
-  fleet=dimensions;
+  fleet={...dimensions,mapUnitsPerMetre:fullDrive?dimensions.mapUnitsPerMetre:dimensions.itineraryUnitsPerMetre};
   for(const [mode,spec] of Object.entries(fleet.vehicles))MODE[mode].len=spec.length*fleet.mapUnitsPerMetre;
   ROUTES=routes?.routes||{};CRUISES=cruises||{};
   const A={};scenes.forEach((s,i)=>A[names[i]]=s);
@@ -633,21 +653,27 @@ addEventListener('resize',resize);
           if(pts.length===6)segs.push(...pts);}}});
     const cg=new THREE.BufferGeometry();cg.setAttribute('position',new THREE.Float32BufferAttribute(segs,3));
     scene.add(new THREE.LineSegments(cg,new THREE.LineBasicMaterial({color:'#4a3b2a',transparent:true,opacity:.22})));}
-  buildTimeline();
   [['car','car'],['coach','coach'],['helicopter','heli'],['boat','boat'],['plane','plane']].forEach(([f,m])=>{
     const v=makeVehicle(A[f],fleet,m);v.visible=false;scene.add(v);vehicles[m]=v;
     v.userData.wheels=[];v.traverse(o=>{if(o.name==='Rotor')v.userData.rotor=o;if(o.name==='TailRotor')v.userData.tail=o;if(/^Wheel_(LF|RF|LR|RR)$/.test(o.name))v.userData.wheels.push(o);if(o.isMesh)o.castShadow=true;});});
   gPlane=makeVehicle(A.plane,fleet,'plane');
   gPlane.visible=false;gScene.add(gPlane);
-  const place=(name,ll,size,col)=>{const p=P(ll[0],ll[1]);const o=fit(A[name],size,col);o.position.set(p.x,H(p.x,p.z),p.z);o.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true;}});scene.add(o);};
-  place('hooker_valley',[-43.72,170.10],.72,'#8b9b83');
-  place('city',[-43.532,172.636],.16,'#ccc');place('mosque',[-43.545,172.56],.26,'#eee');place('church_stone',[-44.015,170.50],.22,'#a98');
-  place('observatory',[-43.975,170.455],.22,'#ddd');place('lone_tree',[-44.693,169.115],.2,'#7a6');place('glowworm_cave',[-45.29495,167.7269],.26,'#556');
-  place('hot_tub',[-44.985,168.66],.2,'#a86');place('ski_lift',[-44.92,168.745],.4,'#ddd');place('glacier_ice',[-43.505,170.30],.6,'#cdeffa');
-  STOPS.slice(0,7).forEach(s=>{const p=P(s[1][0],s[1][1]);const o=fit(A.pin,.3,'#c8432f');o.position.set(p.x+.25,H(p.x+.25,p.z-.2)+.05,p.z-.2);scene.add(o);});
+  landmarkSites=placeTourLandmarks(fit,A,scene,P,terrainSurface,lakeSurface,H,fleet.mapUnitsPerMetre,fullDrive,true);
+  buildTimeline();
+  routeLegs=legs.slice();
+  if(!fullDrive){
+    const chapters=buildItinerary(routeLegs,landmarkSites,P,terrainSurface,lakeSurface);
+    legs.splice(0,legs.length,...chapters);TOTAL=legs.at(-1).start+legs.at(-1).dur;
+    parkedCar=makeVehicle(A.car,fleet,'car');parkedCar.name='Visitor SUV';parkedCar.visible=false;scene.add(parkedCar);
+    for(const button of daysEl.querySelectorAll('button')){
+      const day=Number(button.dataset.day),stops=legs.filter(l=>l.day===day&&l.title);
+      button.querySelector('.modes').textContent=stops.map(l=>l.title).join(' · ');
+    }
+  }
+  if(fullDrive)STOPS.slice(0,7).forEach(s=>{const p=P(s[1][0],s[1][1]);const o=fit(A.pin,.3,'#c8432f');o.position.set(p.x+.25,H(p.x+.25,p.z-.2)+.05,p.z-.2);scene.add(o);});
   if(A.terrain_south_island){
-    const runways=addChristchurchAirport(scene,P,terrainSurface);
-    const group=roadsideLandscape(roadside,fit(sheepLOD,1,'#eee8d6'),terrainSurface,(x,z)=>lakeSurface.height(x,z)!==null,legs,westOfDivide,runways,settlements);
+    const runways=addChristchurchAirport(scene,P,terrainSurface,fullDrive?1:fleet.itineraryRoadUnitsPerMetre/dimensions.mapUnitsPerMetre);
+    const group=roadsideLandscape(roadside,fit(sheepLOD,1,'#eee8d6'),terrainSurface,(x,z)=>lakeSurface.height(x,z)!==null,routeLegs,westOfDivide,runways,settlements,fullDrive?[]:[...landmarkSites.values()]);
     scene.add(group,group.userData.streets);scenery.push(group);
     for(const label of labelEls)if(label.world==='nz')label.v.y=terrainSurface.height(label.v.x,label.v.z)??0;
   }
@@ -655,7 +681,11 @@ addEventListener('resize',resize);
   if(!routes||!cruises){$('status').hidden=false;$('status').textContent='Some routes could not load. Reload to try again.';}
   showDay(0);
   // deep links from the summary page: #day-0 … #day-14
-  const fromHash=()=>{const key=/^#leg-([a-z-]+)$/.exec(location.hash),leg=key&&legs.find(l=>l.key===key[1]);
+  const fromHash=()=>{
+    if(!fullDrive&&location.hash.startsWith('#leg-')){
+      const url=new URL(location.href);url.searchParams.set('tour','drive');location.replace(url.href);return;
+    }
+    const key=/^#leg-([a-z-]+)$/.exec(location.hash),leg=key&&legs.find(l=>l.key===key[1]);
     if(leg){jumpDay(leg.day);showDay(leg.day);t=leg.start+.001;return;}const m=/^#day-(\d{1,2})$/.exec(location.hash);if(m&&+m[1]<=14){jumpDay(+m[1]);showDay(+m[1]);}};
   addEventListener('hashchange',fromHash);fromHash();
 })();

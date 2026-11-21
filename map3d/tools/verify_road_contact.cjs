@@ -6,7 +6,7 @@ global.THREE=THREE;
 require(path.join(root,'atlas/three-r147/GLTFLoader.js'));
 const read=name=>fs.readFileSync(path.join(root,name));
 const travel=Function('THREE',read('atlas/surface-travel.js').toString()+'\nreturn SurfaceTravel;')(THREE);
-const metre=JSON.parse(read('atlas/vehicle-dimensions.json')).mapUnitsPerMetre;
+const dimensions=JSON.parse(read('atlas/vehicle-dimensions.json'));
 
 function registerMesh(index,mesh){
   const geometry=mesh.geometry,positions=geometry.getAttribute('position'),indices=geometry.index?.array;
@@ -33,7 +33,7 @@ function verifyRidgeView(){
   }
   assert.ok(Math.abs(travel.cameraFloor(terrain,start,end,.02)-2.02)<1e-8,'camera sightline must clear the ridge');
 }
-async function verify(edition,asset){
+async function verify(edition,asset,metre){
   const bytes=read(edition+'/assets/'+asset+'.glb');
   const gltf=await new THREE.GLTFLoader().parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
   const terrain=travel.terrainIndex();
@@ -87,6 +87,12 @@ async function verify(edition,asset){
     }
     geometry.dispose();road.material.dispose();
   }
-  console.log(edition+': '+Object.keys(routes).length+' roads, '+triangleCount+' pavement faces, '+poseCount+' in-between poses, maximum terrain error '+worstGap.toExponential(3)+' map units.');
+  console.log(edition+' at '+metre+' map units per road metre: '+Object.keys(routes).length+' roads, '+triangleCount+' pavement faces, '+poseCount+' in-between poses, maximum terrain error '+worstGap.toExponential(3)+' map units.');
 }
-(async()=>{verifyRidgeView();await verify('map3d','terrain_south_island');await verify('map3d-claude','terrain');})().catch(e=>{console.error(e);process.exitCode=1;});
+(async()=>{
+  verifyRidgeView();
+  for(const metre of [dimensions.itineraryRoadUnitsPerMetre,dimensions.mapUnitsPerMetre]){
+    await verify('map3d','terrain_south_island',metre);
+    await verify('map3d-claude','terrain',metre);
+  }
+})().catch(e=>{console.error(e);process.exitCode=1;});

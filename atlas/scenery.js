@@ -1,6 +1,6 @@
 /* Deterministic local tiles keep farms and forest in the same places on the return trip.
    Only nearby tiles own GPU instances. Coordinates use the terrain's island projection. */
-function roadsideLandscape(pack, sheep, terrain, water, legs, west, airport, settlements) {
+function roadsideLandscape(pack, sheep, terrain, water, legs, west, airport, settlements, landmarks=[]) {
   const group=new THREE.Group(), batches=new Map(), cache=new Map(), roads=new Map();
   const cell=.10, key=(x,z)=>x+4096*z;
   const coord=(lat,lon)=>[(lon-170.5)*8.008,-(lat+44)*11.132];
@@ -77,6 +77,7 @@ function roadsideLandscape(pack, sheep, terrain, water, legs, west, airport, set
       const h=terrain.height(x,z);
       const margin=name==='Sheep'?.001:name==='Beech'?size*.44:Math.hypot(size,width)*.48;
       if(h===null||water(x,z)||h<-.001||nearAirport(x,z,margin))return;
+      if(landmarks.some(({bounds})=>x>=bounds.min.x-margin&&x<=bounds.max.x+margin&&z>=bounds.min.z-margin&&z<=bounds.max.z+margin))return;
       const network=roads.get(key(Math.floor(x/cell),Math.floor(z/cell)))||[];
       if(network.some(s=>distanceToSegment(x,z,...s)<.0015+margin))return;
       const dx=(terrain.height(x+.003,z)??h)-h,dz=(terrain.height(x,z+.003)??h)-h;

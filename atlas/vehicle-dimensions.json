@@ -1,5 +1,7 @@
 {
   "mapUnitsPerMetre": 0.00030,
+  "itineraryUnitsPerMetre": 0.00075,
+  "itineraryRoadUnitsPerMetre": 0.00054,
   "vehicles": {
     "car":   {"asset":"car",        "label":"Touring SUV",       "length":4.82, "width":2.14, "height":1.70},
     "coach": {"asset":"coach",      "label":"Touring coach",     "length":12.6, "width":2.9,  "height":3.55},

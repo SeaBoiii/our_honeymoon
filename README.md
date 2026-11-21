@@ -7,7 +7,7 @@ A 14-day self-drive honeymoon from Singapore to Aotearoa (24 Aug – 7 Sep 2027)
 | Page | What it is |
 |---|---|
 | [Summary](https://seaboiii.github.io/our_honeymoon/) | Route map, where we sleep, and things to do, food and stays for every day, plus booking plan, halal guide and checklist |
-| [3D vlog](https://seaboiii.github.io/our_honeymoon/3d/) | A globe flight from Singapore, then the 14-day loop on real roads. Codex built the 3D assets. |
+| [3D vlog](https://seaboiii.github.io/our_honeymoon/3d/) | Day-by-day visits to the South Island landmarks, with short travel scenes. |
 | [3D vlog, Claude cut](https://seaboiii.github.io/our_honeymoon/claude-cut/) | The same trip with its own terrain treatment and the same detailed vehicles and landmarks, plus shadows, ripples on the sea and topographic contours |
 
 Deep links open a 3D page at a given day, e.g. `/3d/#day-6` for Milford Sound.
@@ -30,6 +30,8 @@ map3d-claude/          3D vlog, Claude cut (same layout; Claude's Blender script
 build_site.sh          assembles the GitHub Pages site into docs/
 docs/                  the published site (generated, do not edit by hand)
 ```
+
+The 3D itinerary opens at the destinations. Each map’s **Full driving tour** link opens the 39-leg version at the selected day. Direct road and cruise links still open the complete leg. The original driving edition is also preserved at [archive/full-driving-tour](https://github.com/SeaBoiii/our_honeymoon/tree/archive/full-driving-tour).
 
 ## Rebuilding
 
@@ -57,6 +59,6 @@ ATLAS_URL=http://127.0.0.1:8796 node map3d/tools/verify_playback.cjs
 - The illustrated Christchurch approach uses runway endpoints from [Christchurch Airport, Appendix B](https://www.christchurchairport.co.nz/globalassets/about-us/sustainability/noise/noise-contours/2023-updated-christchurch-international-airport-noise-contours.pdf).
 - Elevation: LINZ NZ 8 m DEM (CC BY 4.0), via OpenTopoData.
 - South Island coastline and eight lakes: [LINZ Topo50 mainland](https://data.linz.govt.nz/layer/50288-nz-island-polygons-topo-150k/) and [lake polygons](https://data.linz.govt.nz/layer/50293-nz-lake-polygons-topo-150k/), CC BY 4.0. Outer island context and world map: Natural Earth (public domain), world-atlas.
-- Roads follow OpenStreetMap/OSRM centrelines with local corner rounding and distance-based speed. The Te Anau cruise links the town waterfront and the western cave landing. Milford and Akaroa turn in their channels. Both regional editions apply one constant cartographic scale to all five vehicles. The source GLBs use the representative metre dimensions in `atlas/vehicle-dimensions.json`.
+- Roads follow OpenStreetMap/OSRM centrelines with local corner rounding and distance-based speed. The Te Anau cruise links the town waterfront and the western cave landing. Milford and Akaroa turn in their channels. Each tour applies one common scale to the five regional vehicles. The itinerary uses 2.5 times the original vehicle scale and illustrative landmark spans in metres. The full driving tour keeps the original presentation. The source GLBs use the representative metre dimensions in `atlas/vehicle-dimensions.json`.
 - 3D rendering: three.js.
 - The research, hotel shortlist and halal notes were compiled in Nov 2026. Prices are estimates, and halal status and road conditions must be rechecked before travel.

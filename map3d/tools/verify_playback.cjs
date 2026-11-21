@@ -13,7 +13,7 @@ async function tourAudit(){
     else cam.updateMatrixWorld();
   };
   clock.getDelta=()=>1/24;
-  const tracked=new Set(),errors=[];
+  const tracked=new Set(),days=new Set(),errors=[];
   const check=(ok,message)=>{if(!ok&&errors.length<10)errors.push(message);};
   let minPlane=Infinity,frames=0;
   try{
@@ -22,7 +22,11 @@ async function tourAudit(){
       const last=curLeg;shouldRender=last<0||t+1/24>=legs[last].start+legs[last].dur&&!tracked.has(last+1);
       frame();frames++;
       const leg=legs[curLeg],id=leg.day+' '+leg.mode+' at '+t.toFixed(2);
-      tracked.add(curLeg);
+      tracked.add(curLeg);days.add(leg.day);
+      if(!fullDrive){
+        check($('leg').textContent===leg.title,'missing chapter heading '+id);
+        if(leg.site==='church_stone'||leg.site==='mosque')check(parkedCar?.visible,'missing parked scale reference '+id);
+      }
       if(leg.world==='nz'){
         const floor=terrainSurface.height(camera.position.x,camera.position.z)??-.02;
         check(camera.position.y>=floor-1e-5,'camera below ground '+id);
@@ -45,13 +49,15 @@ async function tourAudit(){
     }
     check(t===TOTAL&&!playing,'playback did not end');
     // Exact seeks across both scene boundaries and the first road junction.
-    for(const i of [1,2,3,36,37,3]){
+    const moving=legs.map((l,i)=>l.pts?i:-1).filter(i=>i>=0);
+    for(const i of [moving[0],moving[1],moving.at(-1),moving[2]]){
       const l=legs[i];t=l.start+.55*l.dur;curLeg=-1;shouldRender=true;frame();
       const q=active.position.clone().project(camera);
       check(active.visible&&Math.max(Math.abs(q.x),Math.abs(q.y))<.9,'seek missed '+l.mode);
     }
   }finally{renderer.render=render;clock.getDelta=delta;window.requestAnimationFrame=enqueue;setPlaying(false);}
-  return {frames,legs:tracked.size,seconds:TOTAL,errors,minPlane};
+  const roads=legs.filter(l=>l.mode==='car'||l.mode==='coach').reduce((sum,l)=>sum+l.dur,0);
+  return {frames,legs:tracked.size,days:days.size,seconds:TOTAL,roads,errors,minPlane,fullDrive,scale:fleet.mapUnitsPerMetre};
 }
 
 (async()=>{
@@ -59,20 +65,24 @@ async function tourAudit(){
   if(process.env.CHROMIUM_PATH)opts.executablePath=process.env.CHROMIUM_PATH;
   const browser=await chromium.launch(opts),base=process.env.ATLAS_URL||'http://127.0.0.1:8796';
   try{
-    for(const cut of ['3d','claude-cut']){
+    for(const cut of ['3d','claude-cut'])for(const drive of [false,true]){
       const page=await browser.newPage({viewport:process.env.MOBILE?{width:390,height:844}:{width:1180,height:760}});
       const errors=[];
       page.on('pageerror',e=>errors.push(e.message));
       page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
-      await page.route('**/'+cut+'/',async route=>{
+      await page.route(url=>url.pathname==='/'+cut+'/',async route=>{
         const response=await route.fetch(),body=await response.text();
         await route.fulfill({contentType:'text/html; charset=utf-8',body:body.replace('  buildTimeline();','  buildTimeline(); window.tourAudit='+tourAudit.toString()+';')});
       });
-      await page.goto(base+'/'+cut+'/');
+      await page.goto(base+'/'+cut+'/'+(drive?'?tour=drive':''));
       await page.waitForFunction(()=>window.tourAudit&&document.querySelector('#status').hidden,null,{timeout:120000});
       const result=await page.evaluate(()=>window.tourAudit());
-      assert.deepEqual([...errors,...result.errors],[]);assert.equal(result.legs,39);
-      console.log(cut,result.frames+' animation frames, '+result.legs+' legs, '+Math.round(result.seconds)+' seconds, globe plane ≥'+Math.round(result.minPlane)+' px');
+      assert.deepEqual([...errors,...result.errors],[]);assert.equal(result.fullDrive,drive);assert.equal(result.days,15);
+      if(drive){assert.equal(result.legs,39);assert.ok(result.roads>120);}
+      else{assert.ok(result.roads>0&&result.roads/result.seconds<.10);}
+      const scale=JSON.parse(require('node:fs').readFileSync(require('node:path').resolve(__dirname,'../../atlas/vehicle-dimensions.json')));
+      assert.equal(result.scale,drive?scale.mapUnitsPerMetre:scale.itineraryUnitsPerMetre);
+      console.log(cut,drive?'full drive':'itinerary',result.frames+' animation frames, '+result.legs+' legs, '+Math.round(result.seconds)+' seconds ('+Math.round(result.roads)+' on roads), globe plane ≥'+Math.round(result.minPlane)+' px');
       await page.close();
     }
   }finally{await browser.close();}
