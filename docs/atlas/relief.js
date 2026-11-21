@@ -83,7 +83,12 @@ function chartRoad(points, mode, canvas) {
     });
     const mesh=new THREE.Mesh(g,material);
     mesh.renderOrder=casing?2:3;
-    mesh.onBeforeRender=()=>material.uniforms.viewport.value.set(canvas.clientWidth,canvas.clientHeight);
+    mesh.onBeforeRender=()=>{
+      material.uniforms.viewport.value.set(canvas.clientWidth,canvas.clientHeight);
+      // At island scale each projected stroke covers several ridges. Present it
+      // as chart ink so the full itinerary remains traceable between place names.
+      material.depthTest=!road.parent?.userData.chartScale;
+    };
     road.add(mesh);
   }
   return road;

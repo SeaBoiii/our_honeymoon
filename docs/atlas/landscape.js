@@ -23,37 +23,27 @@ function finishLandscape(root){
         diffuseColor.rgb*=.87+soft*(waves-.5)*.21;
         diffuseColor.rgb+=vec3(.016,.03,.033)*smoothstep(.65,.86,waves)*soft;`:`
         vec2 p=atlasWorld.xz;
-        float coarse=atlasNoise(p*8.2)*.65+atlasNoise(p*24.)*.35;
-        float nearField=1.-smoothstep(.002,.04,max(fwidth(p.x),fwidth(p.y)));
-        float grain=(atlasNoise(p*115.)-.5)*nearField;
-        diffuseColor.rgb*=.93+.14*coarse+.075*grain;`;
+        float coarse=atlasNoise(p*5.3)*.6+atlasNoise(p*24.)*.4;
+        float detail=1.-smoothstep(.002,.04,max(fwidth(p.x),fwidth(p.y)));
+        float grain=atlasNoise(p*128.)*.60+atlasNoise(p*380.)*.40;
+        float height=atlasWorld.y;
+        float plain=smoothstep(2.,7.,p.x)*(1.-smoothstep(-2.,1.,p.y))*(1.-smoothstep(.16,.33,height));
+        // Riccarton and the airport suburbs are urban gardens on the plains.
+        float suburb=1.-smoothstep(.45,.78,distance(p,vec2(16.56,-5.42)));
+        plain*=1.-suburb;
+        vec2 uvField=mat2(.956,-.292,.292,.956)*p*vec2(11.,7.);
+        vec2 parcel=floor(uvField),boundary=min(fract(uvField),1.-fract(uvField));
+        float field=atlasHash(parcel);
+        float hedge=1.-smoothstep(.012,.042,min(boundary.x,boundary.y));
+        vec3 pasture=mix(vec3(.28,.39,.135),vec3(.67,.58,.31),field)*(.94+.13*grain);
+        diffuseColor.rgb=mix(diffuseColor.rgb,pasture,plain*.58);
+        diffuseColor.rgb*=1.-hedge*.29*plain*detail;
+        float folds=atlasNoise(vec2(p.x*33.+p.y*13.,p.y*5.))*.62+grain*.38;
+        diffuseColor.rgb*=.76+.32*coarse+detail*((grain-.5)*.26+(folds-.5)*.19);
+        float outcrop=smoothstep(.48,.86,height)*smoothstep(.48,.85,folds);
+        diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.42,.43,.38),outcrop*.31);`;
       shader.fragmentShader='varying vec3 atlasWorld;\n'+noise+'\n'+shader.fragmentShader.replace('#include <color_fragment>','#include <color_fragment>\n'+tint);
     };
-    m.customProgramCacheKey=()=>lake?'atlas-water-1':'atlas-ground-1';m.needsUpdate=true;
+    m.customProgramCacheKey=()=>lake?'atlas-water-1':'atlas-ground-2';m.needsUpdate=true;
   });
-}
-
-function placeRoadsideHabitats(legs,trees,pines,flock,ground,water,west,random){
-  const axis=new THREE.Vector3(0,1,0),q=new THREE.Quaternion(),size=new THREE.Vector3(),m=new THREE.Matrix4();
-  for(const leg of legs){
-    if(leg.mode!=='car'||![2,3,4,5,9,10,12].includes(leg.day))continue;
-    const path=leg.travel;let next=1.3;
-    for(let i=1;i<path.points.length-2;i++){
-      if(path.dist[i]<next)continue;
-      next+=.22+random()*.47;
-      const a=path.points[i],b=path.points[i+1],dx=b.x-a.x,dz=b.z-a.z,l=Math.hypot(dx,dz),side=random()<.5?-1:1;
-      const forest=west(a.x,a.z),isFlock=!forest&&leg.day<6&&random()<.53;
-      const target=forest?trees:isFlock?flock:pines, count=isFlock?4:6;
-      for(let j=0;j<count;j++){
-        const beyond=side*(.006+random()*.033),along=(random()-.5)*.065;
-        const x=a.x+(dx*along-dz*beyond)/l,z=a.z+(dz*along+dx*beyond)/l;
-        const h=ground.height(x,z);
-        if(h===null||h<.025||h>(isFlock?.33:.59)||water(x,z)>.001)continue;
-        const edge=ground.height(x+.018,z+.018);
-        if(edge===null||Math.abs(edge-h)>(isFlock?.012:.027))continue;
-        q.setFromAxisAngle(axis,random()*Math.PI*2);size.setScalar(.62+random()*.52);
-        target.push(m.compose(new THREE.Vector3(x,h,z),q,size).clone());
-      }
-    }
-  }
 }

@@ -37,6 +37,7 @@ docs/                  the published site (generated, do not edit by hand)
 python -I map3d/tools/fetch_routes.py          # road geometry (OSRM / OpenStreetMap)
 python -I map3d/tools/fetch_elevation.py       # LINZ 8 m DEM grid + road elevations
 python map3d/tools/prepare_shorelines.py <topo50-geojson-directory>  # uses Shapely 2
+python map3d/tools/prepare_settlements.py       # offline town streets and footprints (Shapely, mapbox-vector-tile, curl)
 cp map3d/web_assets/routes.json map3d-claude/web_assets/routes.json
 python map3d/tools/verify_surface_routes.py     # Node and Shapely 2: every curved road and cruise
 python -I map3d/tools/fill_dem_gaps.py
@@ -45,11 +46,15 @@ node map3d/tools/verify_road_contact.cjs       # check pavement and vehicle cont
 node map3d/tools/verify_fleet.cjs              # check every exported vehicle against its metre dimensions
 python map3d/tools/build_atlas_art.py          # package the atlas plates (Pillow + NumPy)
 sh build_site.sh
+# With docs served locally and playwright-core on the Node module path:
+ATLAS_URL=http://127.0.0.1:8796 node map3d/tools/verify_playback.cjs
 ```
 
 ## Data and credits
 
 - Road routes: © OpenStreetMap contributors (ODbL), routed with the OSRM demo server.
+- Town streets and building footprints use © OpenStreetMap contributors under the ODbL, via [OpenFreeMap](https://openfreemap.org/) and [OpenMapTiles](https://openmaptiles.org/). The Blender roadside library can be rebuilt with `map3d/blender/scripts/build_roadside.py`. Rural planting and buildings are illustrative.
+- The illustrated Christchurch approach uses runway endpoints from [Christchurch Airport, Appendix B](https://www.christchurchairport.co.nz/globalassets/about-us/sustainability/noise/noise-contours/2023-updated-christchurch-international-airport-noise-contours.pdf).
 - Elevation: LINZ NZ 8 m DEM (CC BY 4.0), via OpenTopoData.
 - South Island coastline and eight lakes: [LINZ Topo50 mainland](https://data.linz.govt.nz/layer/50288-nz-island-polygons-topo-150k/) and [lake polygons](https://data.linz.govt.nz/layer/50293-nz-lake-polygons-topo-150k/), CC BY 4.0. Outer island context and world map: Natural Earth (public domain), world-atlas.
 - Roads follow OpenStreetMap/OSRM centrelines with local corner rounding and distance-based speed. The Te Anau cruise links the town waterfront and the western cave landing. Milford and Akaroa turn in their channels. Both regional editions apply one constant cartographic scale to all five vehicles. The source GLBs use the representative metre dimensions in `atlas/vehicle-dimensions.json`.

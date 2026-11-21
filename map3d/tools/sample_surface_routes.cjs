@@ -7,6 +7,7 @@ const html=read('map3d/index.html');
 const dataset=html.slice(html.indexOf('const SIN='),html.indexOf('const STOPS='));
 ctx.routes=JSON.parse(read('map3d/web_assets/routes.json')).routes;
 ctx.cruises=JSON.parse(read('atlas/cruises.json'));
+vm.runInContext(read('atlas/journey.js'),ctx);
 const args=`
   const rev=a=>a.slice().reverse();
   ${dataset}

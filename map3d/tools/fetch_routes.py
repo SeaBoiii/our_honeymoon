@@ -8,7 +8,7 @@ Waypoints are (lat, lon). Via-points force the intended roads
 import json, time, urllib.request, sys
 from pathlib import Path
 
-AIR=(-43.489,172.532); CHC=(-43.531,172.600); TEK=(-44.005,170.480); TWZ=(-44.258,170.098)
+AIR=(-43.4891,172.5417); CHC=(-43.531,172.600); TEK=(-44.005,170.480); TWZ=(-44.258,170.098)
 MTC=(-43.735,170.096); WAN=(-44.700,169.135); TEA=(-45.414,167.718); QT=(-45.031,168.662)
 FJ=(-43.387,170.183); MIL=(-44.6715,167.9265); AKA=(-43.804,172.968)
 GERALDINE=(-44.09,171.24); FAIRLIE=(-44.10,170.83); OMARAMA=(-44.487,169.968); TARRAS=(-44.835,169.41)

@@ -108,15 +108,16 @@ const SurfaceTravel=(()=>{
       }
     }
     // Local quadratic fillets cannot swing outside the triangle of their controls.
-    // On a road the maximum trim is 25 m, even on highway-length segments.
+    // On a road the maximum trim is 80 m, even on highway-length segments.
     for(let i=1;i<raw.length-1;i++){
       const a=raw[i-1],b=raw[i],c=raw[i+1],ab=a.distanceTo(b),bc=b.distanceTo(c);
       if(ab<1e-7||bc<1e-7){append(b);continue;}
-      const trim=Math.min(boat?.005:.0025,.34*ab,.34*bc);
+      const trim=Math.min(boat?.005:.008,(boat?.34:.43)*ab,(boat?.34:.43)*bc);
       const entry=b.clone().lerp(a,trim/ab),exit=b.clone().lerp(c,trim/bc);
       append(entry);
-      for(let j=1;j<=5;j++){
-        const t=j/5;
+      const steps=boat?5:8;
+      for(let j=1;j<=steps;j++){
+        const t=j/steps;
         append(entry.clone().lerp(b,t).lerp(b.clone().lerp(exit,t),t));
       }
     }
@@ -246,8 +247,8 @@ const SurfaceTravel=(()=>{
     }
     return output;
   }
-  function ribbon(path,metre,terrain){
-    const pos=[],uv=[],normals=[],indices=[],half=2.95*metre;
+  function ribbon(path,metre,terrain,buffers){
+    const {pos,uv,normals,indices}=buffers||{pos:[],uv:[],normals:[],indices:[]},half=2.95*metre;
     function drape(polygon){
       let minX=Infinity,minZ=Infinity,maxX=-Infinity,maxZ=-Infinity;
       for(const p of polygon){minX=Math.min(minX,p.x);minZ=Math.min(minZ,p.z);maxX=Math.max(maxX,p.x);maxZ=Math.max(maxZ,p.z);}
@@ -305,16 +306,17 @@ const SurfaceTravel=(()=>{
       }
       previous={left,right};
     }
+    if(buffers)return;
     const g=new THREE.BufferGeometry();
     g.setIndex(indices);g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
     g.setAttribute('normal',new THREE.Float32BufferAttribute(normals,3));
-    const mat=new THREE.MeshStandardMaterial({color:'#525852',roughness:.97,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1});
+    const mat=new THREE.MeshStandardMaterial({color:'#383f40',roughness:.97,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-6});
     mat.onBeforeCompile=s=>{
       s.vertexShader='varying vec2 roadCoord;\n'+s.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nroadCoord=uv;');
       s.fragmentShader='varying vec2 roadCoord;\n'+s.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
         float edge=smoothstep(.445,.475,abs(roadCoord.x-.5));
         float stripe=(1.-smoothstep(.012,.029,abs(roadCoord.x-.5)))*smoothstep(.38,.46,fract(roadCoord.y*280.));
-        diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.77,.74,.60),max(edge*.68,stripe*.75));`);
+        diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.77,.74,.60),max(edge*.32,stripe*.72));`);
     };
     const mesh=new THREE.Mesh(g,mat);mesh.receiveShadow=true;mesh.renderOrder=1;
     return mesh;
@@ -340,5 +342,5 @@ const SurfaceTravel=(()=>{
     if(travel)travel.km=record.km;
     return travel;
   }
-  return {terrainIndex,forLeg,pose,ribbon,groundLine,cameraFloor,wheelContact};
+  return {terrainIndex,forLeg,atDistance,pose,ribbon,groundLine,cameraFloor,wheelContact};
 })();

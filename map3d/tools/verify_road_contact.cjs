@@ -43,11 +43,17 @@ async function verify(edition,asset){
   });
   const routes=JSON.parse(read(edition+'/web_assets/routes.json')).routes;
   const project=([lat,lon])=>new THREE.Vector3((lon-170.5)*8.008,0,-(lat+44)*11.132);
+  const junctions=new Map();
   let triangleCount=0,poseCount=0,worstGap=0;
   for(const key of Object.keys(routes)){
     const mode=key.includes('milford')?'coach':'car';
     const tr=travel.forLeg(mode,'r:'+key,routes,{},project,terrain.height,0,.0005);
     const road=travel.ribbon(tr,metre,terrain),geometry=road.geometry;
+    const ends=key.split('-');
+    for(const [name,p] of [[ends[0],tr.points[0]],[ends[1],tr.points.at(-1)]]){
+      if(junctions.has(name))assert.ok(p.distanceTo(junctions.get(name))<1e-7,'Disconnected road at '+name+' on '+key);
+      junctions.set(name,p);
+    }
     const v=geometry.getAttribute('position'),idx=geometry.index.array;
     const pavement=travel.terrainIndex();registerMesh(pavement,road);
     function checkSurface(x,y,z){
@@ -68,6 +74,15 @@ async function verify(edition,asset){
       const y=pavement.height(q.x,q.z);
       assert.notEqual(y,null,key+' has a gap under the vehicle at segment '+i);
       assert.ok(Math.abs(q.y-y)<.000025,key+' vehicle/pavement separation: '+Math.abs(q.y-y));
+      if(i%12===0){
+        const a=tr.points[i],b=tr.points[i+1],dx=b.x-a.x,dz=b.z-a.z,length=Math.hypot(dx,dz);
+        for(const offset of [-1.4*metre,1.4*metre]){
+          const x=q.x+offset*dz/length,z=q.z-offset*dx/length;
+          const lane=pavement.height(x,z);
+          assert.notEqual(lane,null,key+' missing lane surface at segment '+i);
+          checkSurface(x,lane,z);
+        }
+      }
       checkSurface(q.x,q.y,q.z);poseCount++;
     }
     geometry.dispose();road.material.dispose();
