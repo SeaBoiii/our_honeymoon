@@ -296,10 +296,13 @@ function raster(mesh,arr){
   mesh.updateMatrixWorld(true);
   const g=mesh.geometry,pos=g.attributes.position,idx=g.index,n=pos.count,m=mesh.matrixWorld,v=new THREE.Vector3();
   const X=new Float32Array(n),Y=new Float32Array(n),Z=new Float32Array(n);
+  const normals=arr===land&&g.attributes.normal?new Float32Array(n*3):null;
+  const normalScratch=new THREE.Vector3(),normalMatrix=normals?new THREE.Matrix3().getNormalMatrix(m):null;
   for(let i=0;i<n;i++){v.fromBufferAttribute(pos,i).applyMatrix4(m);X[i]=v.x;Y[i]=v.y;Z[i]=v.z;
+    if(normals)normalScratch.fromBufferAttribute(g.attributes.normal,i).applyNormalMatrix(normalMatrix).toArray(normals,3*i);
     const ci=Math.floor((v.x-G.x0)/G.step),cj=Math.floor((v.z-G.z0)/G.step);
     if(ci>=0&&cj>=0&&ci<G.nx&&cj<G.nz){const k=cj*G.nx+ci;if(v.y>arr[k])arr[k]=v.y;}}
-  const register=arr===land?terrainSurface.mesh(X,Y,Z,idx?.array):null;
+  const register=arr===land?terrainSurface.mesh(X,Y,Z,idx?.array,normals):null;
   const T=idx?idx.count/3:n/3;
   for(let t=0;t<T;t++){
     const a=idx?idx.getX(3*t):3*t,b=idx?idx.getX(3*t+1):3*t+1,c=idx?idx.getX(3*t+2):3*t+2;
@@ -371,15 +374,15 @@ function buildTimeline(){
     else if(['car','coach','boat'].includes(mode)){
       const boat=mode==='boat';
       const project=q=>{const p=P(...q);return new THREE.Vector3(p.x,0,p.z);};
-      L.travel=SurfaceTravel.forLeg(mode,path,ROUTES,CRUISES,project,(x,z)=>terrainSurface.height(x,z),sea.position.y,EXAG);
+      L.travel=SurfaceTravel.forLeg(mode,path,ROUTES,CRUISES,project,terrainSurface.height,sea.position.y,EXAG);
       L.key=path.slice(2).split(':')[0];
       if(!L.travel)return;
       L.pts=L.travel.points;L.len=L.travel.length;L.dur=L.travel.duration;L.km=L.travel.km;
       if(boat){
         const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(L.pts),new THREE.LineBasicMaterial({color:'#6cabae',transparent:true,opacity:.6}));
         tubes.add(line);
-      }else tubes.add(SurfaceTravel.ribbon(L.travel,fleet.mapUnitsPerMetre,(x,z)=>terrainSurface.height(x,z)));
-      overviewRoads.add(chartRoad(L.pts.filter((_,i)=>i===0||i===L.pts.length-1||i%6===0),mode,canvas));
+      }else tubes.add(SurfaceTravel.ribbon(L.travel,fleet.mapUnitsPerMetre,terrainSurface));
+      overviewRoads.add(chartRoad(boat?L.pts:SurfaceTravel.groundLine(L.travel.roadSamples.map(i=>L.pts[i]),terrainSurface),mode,canvas));
     }
     else{
       const proj=path.map(q=>{const p=P(...q);return new THREE.Vector3(p.x,0,p.z);});
@@ -390,7 +393,7 @@ function buildTimeline(){
       const tube=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(sp.map(v=>v.clone().add(new THREE.Vector3(0,.03,0)))),n,mode==='plane'?.03:.03,5),
         new THREE.MeshBasicMaterial({color:MODE[mode].c,transparent:true,opacity:.85}));
       const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(sp.map(v=>v.clone().setY(v.y+.03))),new THREE.LineBasicMaterial({color:MODE[mode].c,transparent:true,opacity:.9}));
-      tubes.add(tube,line);L.tube=tube;L.line=line;
+      L.flightPath=new THREE.Group();L.flightPath.add(tube,line);L.flightPath.visible=false;tubes.add(L.flightPath);
     }
     const previous=legs[legs.length-1];
     L.cut=previous&&(L.world!==previous.world||(L.at||L.pts[0]).distanceTo(previous.at||previous.pts[previous.pts.length-1])>.35);
@@ -439,6 +442,7 @@ function leaveStudio(){
 function markFollow(value){follow=value;$('follow').setAttribute('aria-pressed',String(value));}
 function showRoute(){
   needsDraw=true;
+  for(const leg of legs){if(leg.flightPath)leg.flightPath.visible=false;}
   leaveStudio();setPlaying(false);markFollow(false);started=false;t=0;curLeg=curDay=-1;night=0;
   if(active){active.visible=false;active=null;}
   setWorld('nz');overview();
@@ -447,7 +451,6 @@ function showRoute(){
   $('ctext').textContent='Select a stop on the map, explore a landmark or play the trip from Singapore.';
   $('scrub').value=0;$('clock').textContent='14 days';
   daysEl.querySelectorAll('button').forEach(b=>b.removeAttribute('aria-current'));
-  legs.forEach(L=>{if(L.tube){L.tube.material.opacity=.82;L.line.material.opacity=.95;}});
 }
 function openPlace(key){
   const place=atlasPlaces.find(p=>p.key===key);
@@ -509,7 +512,6 @@ function showDay(d){if(d===curDay)return;curDay=d;const D=DAYS[d];
   $('ctitle').textContent=(d?'Day '+d+' · ':'')+D.t;$('ctext').textContent=D.x;$('cfood').textContent='Halal: '+D.f;$('cstay').textContent='Tonight: '+NIGHTS[d];$('clock').textContent=D.w+' '+D.d;
   daysEl.querySelectorAll('button').forEach(b=>b.setAttribute('aria-current',String(+b.dataset.day===d)));
   const cur=daysEl.querySelector('[aria-current="true"]');if(cur)cur.scrollIntoView({block:'nearest'});
-  legs.forEach(L=>{if(L.tube){const o=L.day===d?.95:(L.mode==='plane'?.25:.38);L.tube.material.opacity=o;L.line.material.opacity=Math.max(o,.5);}});
   if(started)chapter(d?'Day '+d+' · '+D.w+' '+D.d:'Departure · '+D.w+' '+D.d,D.t,D.x.split('. ')[0].replace(/\.$/,''));
 }
 function stampFor(L){const D=DAYS[L.day],place=L.world==='globe'?(L.mode==='gstay'?'SINGAPORE':'SQ'+(L.day?'298':'297')+' · IN FLIGHT'):'NEW ZEALAND';
@@ -540,6 +542,7 @@ function followNZ(L,goal,dt,velocity){
   if(legChangeT<2||L.travel&&playing){const want=followDistance(L,velocity);off.setLength(off.length()+(want-off.length())*(1-Math.exp(-dt*2)));}
   if(L.mode==='stay'&&playing)off.applyAxisAngle(UP,dt*.25*speed);
   camera.position.copy(target).add(off);
+  if(L.travel&&!L.travel.boat)return;
   let minY=Math.max(terrainSurface.height(camera.position.x,camera.position.z)??0,target.y)+(L.travel?.0028:.06);
   for(let f=.2;f<1;f+=.2){const sx=target.x+(camera.position.x-target.x)*f,sz=target.z+(camera.position.z-target.z)*f;minY=Math.max(minY,((terrainSurface.height(sx,sz)??0)+(L.travel?.001:.025)-target.y*(1-f))/f);}
   if(camera.position.y<minY)camera.position.y+=(minY-camera.position.y)*Math.min(1,dt*8);
@@ -555,7 +558,7 @@ function frame(){
     let li=legs.findIndex((L,i)=>t>=L.start&&(i===legs.length-1||t<legs[i+1].start));if(li<0)li=0;
     const L=legs[li];
     const changed=li!==curLeg;
-    if(changed){curLeg=li;legChangeT=0;$('leg').textContent=MODE[L.mode].name+(L.km?' · '+L.km+' km':'');$('sub').textContent=L.cap;$('sub').classList.add('on');$('stamp').textContent=stampFor(L);setWorld(L.world);}
+    if(changed){for(const leg of legs){if(leg.flightPath)leg.flightPath.visible=leg===L;}curLeg=li;legChangeT=0;$('leg').textContent=MODE[L.mode].name+(L.km?' · '+L.km+' km':'');$('sub').textContent=L.cap;$('sub').classList.add('on');$('stamp').textContent=stampFor(L);setWorld(L.world);}
     legChangeT+=dt;showDay(L.day);
     // dip to black around globe <-> island cuts
     legs.forEach((M,i)=>{if(M.cut){const d=Math.abs(t-M.start);if(playing&&d<.6)fade=Math.max(fade,1-d/.6);}});
@@ -569,9 +572,10 @@ function frame(){
         const du=L.world==='globe'?.01:Math.min(.5,(L.mode==='plane'?.6:.14)/(L.len||1));
         const dir=L.travel?q.d:u+du<=1?posOnLeg(L,u+du).p.sub(q.p):q.p.clone().sub(posOnLeg(L,Math.max(0,u-du)).p);
         if(L.mode==='heli')dir.y*=.35;
-        if(L.world==='globe')ghost.up.copy(q.p).normalize();else ghost.up.set(0,1,0);
+        if(L.travel&&!L.travel.boat)ghost.up.copy(SurfaceTravel.wheelContact(L.travel,q,fleet.vehicles[L.mode],fleet.mapUnitsPerMetre));
+        else if(L.world==='globe')ghost.up.copy(q.p).normalize();else ghost.up.set(0,1,0);
         if(dir.lengthSq()>1e-12){ghost.position.copy(q.p);tmp.copy(q.p).sub(dir);ghost.lookAt(tmp);
-          if(fresh||L.travel)v.quaternion.copy(ghost.quaternion);else v.quaternion.slerp(ghost.quaternion,1-Math.exp(-dt*7*Math.max(1,speed)));}
+          if(fresh)v.quaternion.copy(ghost.quaternion);else v.quaternion.slerp(ghost.quaternion,1-Math.exp(-dt*(L.travel?18:7)*Math.max(1,speed)));}
         const rotor=v.userData.rotor,tail=v.userData.tail;if(rotor)rotor.rotation.y+=dt*40;if(tail)tail.rotation.x+=dt*50;
         if(L.mode==='car')for(const wheel of v.userData.wheels)wheel.rotation.x=-q.s/(fleet.mapUnitsPerMetre*.38);}
     }
@@ -582,11 +586,16 @@ function frame(){
   if(chapterTimer>0){chapterTimer-=dt;if(chapterTimer<=0)$('chapter').classList.remove('show');}
   $('fade').style.opacity=fade.toFixed(3);
   skyCol.copy(DAY).lerp(NIGHT,night);scene.fog.color.copy(skyCol);nzStars.material.opacity=night;hemi.intensity=.9-.6*night;sun.intensity=1.1-.85*night;
-  overviewRoads.visible=!started&&!inspected&&world==='nz';
+  overviewRoads.visible=!started&&!inspected&&world==='nz'&&camera.position.distanceTo(controls.target)>2;
   if(world==='nz'&&!inspected)for(const group of scenery)group.userData.update(camera.position);
   const near=Math.max(.00035,Math.min(.12,camera.position.distanceTo(controls.target)*.014));
   if(Math.abs(near-camera.near)>near*.06){camera.near=near;camera.updateProjectionMatrix();}
   controls.update();
+  const road=started&&follow&&legs[curLeg]?.travel;
+  if(road&&!road.boat){
+    const minY=SurfaceTravel.cameraFloor(terrainSurface,controls.target,camera.position,.0015);
+    if(camera.position.y<minY){camera.position.y=minY;camera.lookAt(controls.target);}
+  }
   if(!started&&!needsDraw){requestAnimationFrame(frame);return;}
   needsDraw=false;renderer.render(inspected?studio.scene:world==='globe'?gScene:scene,camera);
   const w=canvas.clientWidth,h=canvas.clientHeight,camDir=camera.position.clone().normalize();

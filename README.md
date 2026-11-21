@@ -41,6 +41,7 @@ cp map3d/web_assets/routes.json map3d-claude/web_assets/routes.json
 python map3d/tools/verify_surface_routes.py     # Node and Shapely 2: every curved road and cruise
 python -I map3d/tools/fill_dem_gaps.py
 # then run the Blender scripts inside Blender as described in map3d/blender/README.md
+node map3d/tools/verify_road_contact.cjs       # check pavement and vehicle contact against both terrain meshes
 node map3d/tools/verify_fleet.cjs              # check every exported vehicle against its metre dimensions
 python map3d/tools/build_atlas_art.py          # package the atlas plates (Pillow + NumPy)
 sh build_site.sh

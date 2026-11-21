@@ -68,7 +68,7 @@ function chartRoad(points, mode, canvas) {
   for(const casing of [true,false]){
     const material=new THREE.ShaderMaterial({
       uniforms:{viewport:{value:new THREE.Vector2()},ink:{value:new THREE.Color(casing?'#fff6d9':colors[mode])},
-        halfWidth:{value:casing?2.8:1.45}},depthTest:false,depthWrite:false,side:THREE.DoubleSide,
+        halfWidth:{value:casing?2.8:1.45}},depthTest:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-2,side:THREE.DoubleSide,
       vertexShader:`attribute vec3 previous,nextPoint;attribute float side;
       uniform vec2 viewport;uniform float halfWidth;
       void main(){
