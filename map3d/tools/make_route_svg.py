@@ -34,7 +34,7 @@ for land in coast['land']:
         continue
     out.append('<path class="land" d="%s"/>' % path(land['ring'], True, 2))
 for lake in lakes:
-    out.append('<path class="lake" d="%s"/>' % path(lake['ring'], True))
+    out.append('<path class="lake" fill-rule="evenodd" d="%s"/>' % ' '.join(path(ring, True) for ring in [lake['ring'],*lake.get('islands',[])]))
 drive = ['air-chc', 'chc-tekapo', 'tekapo-twizel', 'twizel-mtcook', 'mtcook-wanaka', 'wanaka-teanau', 'teanau-qt',
          'qt-coronet', 'coronet-onsen', 'onsen-glenorchy', 'glenorchy-qt', 'qt-franz', 'franz-chc', 'chc-akaroa', 'akaroa-air']
 for k in drive:

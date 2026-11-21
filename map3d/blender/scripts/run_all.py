@@ -14,7 +14,7 @@ def run_all():
     g={'PROJECT_ROOT':str(PROJECT_ROOT),'__name__':'__main__',
        'RENDER_PREVIEWS':globals().get('RENDER_PREVIEWS',True)}
     scripts=PROJECT_ROOT/'map3d/blender/scripts'
-    for filename in ('build_terrain.py','build_vehicles.py','build_props.py','write_manifest.py'):
+    for filename in ('build_terrain.py','build_vehicles.py','build_props.py','build_valley.py','write_manifest.py'):
         path=scripts/filename
         if not path.is_file():
             raise RuntimeError('Missing build script: '+str(path))
@@ -24,7 +24,7 @@ def run_all():
                 exec(source.read(),g)
         except Exception as exc:
             raise RuntimeError('Honeymoon build failed in %s: %s' % (filename,exc)) from exc
-    print('[run_all] Complete: 19 GLBs, manifest, .blend and two look renders.')
+    print('[run_all] Complete: 20 GLBs, manifest, .blend and look renders.')
 
 
 run_all()

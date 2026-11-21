@@ -7,15 +7,17 @@ A 14-day self-drive honeymoon from Singapore to Aotearoa (24 Aug – 7 Sep 2027)
 | Page | What it is |
 |---|---|
 | [Summary](https://seaboiii.github.io/our_honeymoon/) | Route map, where we sleep, and things to do, food and stays for every day, plus booking plan, halal guide and checklist |
-| [3D vlog](https://seaboiii.github.io/our_honeymoon/3d/) | A globe flight from Singapore, then the 14-day loop on real roads. Codex built the 3D assets. |
-| [3D vlog, Claude cut](https://seaboiii.github.io/our_honeymoon/claude-cut/) | The same trip with Claude-built terrain, vehicles and landmarks, plus shadows, ripples on the sea and topographic contours |
+| [3D vlog](https://seaboiii.github.io/our_honeymoon/3d/) | Day-by-day visits to the South Island landmarks, with short travel scenes. |
+| [3D vlog, Claude cut](https://seaboiii.github.io/our_honeymoon/claude-cut/) | The same trip with its own terrain treatment and the same detailed vehicles and landmarks, plus shadows, ripples on the sea and topographic contours |
 
 Deep links open a 3D page at a given day, e.g. `/3d/#day-6` for Milford Sound.
+The primary map opens a common-scale vehicle lineup at `#place-fleet`, the SUV at `#place-suv` and the merino at `#place-merino`. Ten landmarks are available in the same orbit viewer. Open `#leg-te-anau` to board the lake cruise or `#leg-onsen-glenorchy` to follow the lakeside drive.
 
 ## Repository layout
 
 ```
 honeymoon.html         summary page source
+atlas/                 shared web styles, Blender illustrations, fonts and three.js r147
 itinerary.md           the day-by-day plan as text
 map3d/                 3D vlog (Codex assets)
   index.html             three.js app
@@ -29,22 +31,34 @@ build_site.sh          assembles the GitHub Pages site into docs/
 docs/                  the published site (generated, do not edit by hand)
 ```
 
+The 3D itinerary opens at the destinations. Each map’s **Full driving tour** link opens the 39-leg version at the selected day. Direct road and cruise links still open the complete leg. The original driving edition is also preserved at [archive/full-driving-tour](https://github.com/SeaBoiii/our_honeymoon/tree/archive/full-driving-tour).
+
 ## Rebuilding
 
 ```sh
 python -I map3d/tools/fetch_routes.py          # road geometry (OSRM / OpenStreetMap)
 python -I map3d/tools/fetch_elevation.py       # LINZ 8 m DEM grid + road elevations
-python -I map3d/tools/make_coastline.py <land-10m.json> <ne_10m_lakes.geojson>
-python -I map3d/tools/fit_coast_to_roads.py    # make sure every road sits on land
+python map3d/tools/prepare_shorelines.py <topo50-geojson-directory>  # uses Shapely 2
+python map3d/tools/prepare_settlements.py       # offline town streets and footprints (Shapely, mapbox-vector-tile, curl)
+cp map3d/web_assets/routes.json map3d-claude/web_assets/routes.json
+python map3d/tools/verify_surface_routes.py     # Node and Shapely 2: every curved road and cruise
 python -I map3d/tools/fill_dem_gaps.py
-# then run the Blender scripts inside Blender, re-wrap the GLBs, and:
+# then run the Blender scripts inside Blender as described in map3d/blender/README.md
+node map3d/tools/verify_road_contact.cjs       # check pavement and vehicle contact against both terrain meshes
+node map3d/tools/verify_fleet.cjs              # check every exported vehicle against its metre dimensions
+python map3d/tools/build_atlas_art.py          # package the atlas plates (Pillow + NumPy)
 sh build_site.sh
+# With docs served locally and playwright-core on the Node module path:
+ATLAS_URL=http://127.0.0.1:8796 node map3d/tools/verify_playback.cjs
 ```
 
 ## Data and credits
 
 - Road routes: © OpenStreetMap contributors (ODbL), routed with the OSRM demo server.
+- Town streets and building footprints use © OpenStreetMap contributors under the ODbL, via [OpenFreeMap](https://openfreemap.org/) and [OpenMapTiles](https://openmaptiles.org/). The Blender roadside library can be rebuilt with `map3d/blender/scripts/build_roadside.py`. Rural planting and buildings are illustrative.
+- The illustrated Christchurch approach uses runway endpoints from [Christchurch Airport, Appendix B](https://www.christchurchairport.co.nz/globalassets/about-us/sustainability/noise/noise-contours/2023-updated-christchurch-international-airport-noise-contours.pdf).
 - Elevation: LINZ NZ 8 m DEM (CC BY 4.0), via OpenTopoData.
-- Coastline, lakes and world map: Natural Earth (public domain), world-atlas.
+- South Island coastline and eight lakes: [LINZ Topo50 mainland](https://data.linz.govt.nz/layer/50288-nz-island-polygons-topo-150k/) and [lake polygons](https://data.linz.govt.nz/layer/50293-nz-lake-polygons-topo-150k/), CC BY 4.0. Outer island context and world map: Natural Earth (public domain), world-atlas.
+- Roads follow OpenStreetMap/OSRM centrelines with local corner rounding and distance-based speed. The Te Anau cruise links the town waterfront and the western cave landing. Milford and Akaroa turn in their channels. Each tour applies one common scale to the five regional vehicles. The itinerary uses 2.5 times the original vehicle scale and illustrative landmark spans in metres. The full driving tour keeps the original presentation. The source GLBs use the representative metre dimensions in `atlas/vehicle-dimensions.json`.
 - 3D rendering: three.js.
 - The research, hotel shortlist and halal notes were compiled in Nov 2026. Prices are estimates, and halal status and road conditions must be rechecked before travel.

@@ -4,6 +4,7 @@ import json
 import math
 import re
 import bpy
+import bmesh
 from mathutils import Vector, Matrix
 
 PROJECT_ROOT = Path(globals().get('PROJECT_ROOT', 'C:/Users/seabo/Documents/GitHub/our_honeymoon')).resolve()
@@ -42,7 +43,17 @@ def material(key, vertex_color=False, emission=0.0):
     output = mat.node_tree.nodes.new('ShaderNodeOutputMaterial')
     bsdf = mat.node_tree.nodes.new('ShaderNodeBsdfPrincipled')
     bsdf.inputs['Base Color'].default_value = rgba(key)
-    bsdf.inputs['Roughness'].default_value = .87
+    bsdf.inputs['Roughness'].default_value = {'glass': .23, 'ice': .33, 'water': .28,
+                                               'red': .38, 'fiord': .36}.get(key, .76)
+    if key in ('#858783','#b9c0bf','#28373e'):
+        bsdf.inputs['Metallic'].default_value = .58 if key!='#28373e' else .24
+        bsdf.inputs['Roughness'].default_value = .25 if key!='#28373e' else .18
+    if key=='#435054':
+        bsdf.inputs['Alpha'].default_value=.74
+        bsdf.inputs['Metallic'].default_value=.22
+        bsdf.inputs['Roughness'].default_value=.16
+    if key in ('glass', 'red'):
+        bsdf.inputs['Metallic'].default_value = .18
     mat.diffuse_color = rgba(key)
     if vertex_color:
         attr = mat.node_tree.nodes.new('ShaderNodeVertexColor')
@@ -174,16 +185,21 @@ def descendants(obj):
 
 def asset_stats(obj):
     bpy.context.view_layer.update()
-    vertices, triangles = [], 0
+    import numpy as np
+    low=np.full(3,np.inf);high=np.full(3,-np.inf);triangles=0
     for child in descendants(obj):
-        if child.type != 'MESH':
+        if child.type != 'MESH' or not child.data.vertices:
             continue
         child.data.calc_loop_triangles()
         triangles += len(child.data.loop_triangles)
-        vertices.extend(child.matrix_world @ Vector(v) for v in child.bound_box)
-    if not vertices:
-        raise RuntimeError('Asset contains no meshes: ' + obj.name)
-    return triangles, [min(v[i] for v in vertices) for i in range(3)], [max(v[i] for v in vertices) for i in range(3)]
+        coords=np.empty(3*len(child.data.vertices),dtype=np.float32)
+        child.data.vertices.foreach_get('co',coords)
+        transform=np.asarray(child.matrix_world)
+        pts=coords.reshape(-1,3)@transform[:3,:3].T+transform[:3,3]
+        low=np.minimum(low,pts.min(axis=0));high=np.maximum(high,pts.max(axis=0))
+    if not triangles:
+        raise RuntimeError('Asset contains no meshes: '+obj.name)
+    return triangles,low.tolist(),high.tolist()
 
 
 def normalize_asset(obj, largest=1.0, length=None):
@@ -202,6 +218,11 @@ def normalize_asset(obj, largest=1.0, length=None):
     bpy.context.view_layer.update()
 
 
+def export_budget(stem):
+    return {'terrain_south_island':11_000_000,'hooker_valley':2_600_000,'car':2_000_000,
+            'pine_tree':850_000,'beech_tree':850_000,'sheep':950_000}.get(stem,1_250_000)
+
+
 def export_glb(root_obj, path):
     object_mode()
     path = Path(path)
@@ -218,13 +239,13 @@ def export_glb(root_obj, path):
             obj.hide_set(False)
             obj.select_set(True)
         bpy.context.view_layer.objects.active = root_obj
-        kwargs = dict(filepath=str(path), export_format='GLB', use_selection=True,
+        kwargs = dict(filepath=str(path), export_format='GLB', use_selection=True,use_active_scene=True,
                       export_apply=True, export_yup=True, export_vertex_color='ACTIVE',
                       export_texcoords=False, export_animations=False, export_cameras=False,
                       export_lights=False)
         if root_obj.name == 'Terrain':
             # Shared POINT colours + no normal/UV streams keep 120k+ triangles
-            # below 6 MB. glTF missing NORMAL specifies flat normals; three's
+            # compact. glTF missing NORMAL specifies flat normals; three's
             # GLTFLoader uses derivative flatShading for this case. No Draco.
             kwargs['export_normals'] = False
         optional = set(kwargs) - {'filepath','export_format','use_selection'}
@@ -243,11 +264,15 @@ def export_glb(root_obj, path):
                 print('[export] Retrying without unsupported %s: %s' % (rejected, message))
                 kwargs.pop(rejected)
                 optional.remove(rejected)
-        limit = 6_000_000 if root_obj.name == 'Terrain' else 300_000
+        limit = export_budget(path.stem)
         size = path.stat().st_size
         if size >= limit:
             raise RuntimeError('%s is %s bytes; budget is strictly under %s bytes' % (path.name,size,limit))
         print('[export] %s: %s triangles, %.1f KB' % (path.name,asset_stats(root_obj)[0],size/1000))
+        import base64
+        dest = PROJECT_ROOT / 'map3d/web_assets' / (path.stem+'.json')
+        dest.write_text(json.dumps({'format':'glb-base64','name':path.stem,
+                                    'data':base64.b64encode(path.read_bytes()).decode('ascii')}), encoding='utf-8')
     finally:
         for obj in nodes:
             obj.select_set(False)
@@ -261,17 +286,17 @@ def export_glb(root_obj, path):
 
 
 ASSET_DEFINITIONS = [
-    ('terrain_south_island','Terrain','LINZ DEM elevation at 5x; lowered real-road corridors; hand-digitised rings; separate water surfaces.'),
-    ('car','Car','Compact SUV, ski rack; +Y forward.'),
+    ('terrain_south_island','Terrain','LINZ DEM at 5x, Topo50 mainland coast and lake margins aligned to road shoulders, eight lake surfaces and height-blended winter vegetation.'),
+    ('car','Car','Silver touring SUV with shaped wheel arches, individual alloy wheels and roof rails; +Y forward.'),
     ('coach','Coach','Generic white touring coach; +Y forward.'),
     ('helicopter','Helicopter','Rotor local Z; TailRotor local X; +Y forward.'),
     ('boat','Boat','Two-deck fiord cruise boat; +Y forward.'),
     ('plane','Plane','Generic twin-jet wide-body; +Y forward.'),
     ('church_stone','StoneChurch','Stone lakeside chapel and bell tower.'),
-    ('observatory','Observatory','Telescope dome and slit.'),
-    ('lone_tree','LoneTree','Willow in shallow water.'),
+    ('observatory','Observatory','Shutter rails, segmented dome, walkway, access stairs and handrails.'),
+    ('lone_tree','LoneTree','Bent willow trunk, hanging shoots, lanceolate leaves and a shingle shoal.'),
     ('hot_tub','HotTub','Cedar tub for two on a cliff deck.'),
-    ('mosque','Mosque','Generic dome and one minaret.'),
+    ('mosque','Mosque','Prayer hall with arched glazing, stonework, dome and a balustraded minaret.'),
     ('city','City','Twelve buildings and street.'),
     ('glowworm_cave','Cave','Cave arch, small boat, emissive glow points.'),
     ('ski_lift','SkiLift','Three towers, cable and hanging chairs.'),
@@ -279,6 +304,7 @@ ASSET_DEFINITIONS = [
     ('pine_tree','PineTree','Conifer.'),('beech_tree','BeechTree','Rounded native tree.'),
     ('sheep','Sheep','Wool body, dark head and four legs.'),
     ('pin','Pin','Accent-red map pin with an actual heart-shaped aperture.'),
+    ('hooker_valley','HookerValley','Alpine valley miniature with a braided river and a suspended timber footbridge.'),
 ]
 
 
@@ -294,13 +320,25 @@ class Kit:
         return '%s_%s_%03d' % (self.obj.name,label,self.counter)
 
     def cube(self, loc, size, mat, label='Block', parent=None):
-        return box(self.name(label),loc,size,mat,self.col,parent or self.obj)
+        obj = box(self.name(label),loc,size,mat,self.col,parent or self.obj)
+        # Small fittings stay light. Larger panels catch a narrow highlight.
+        if min(size) > .035:
+            bm = bmesh.new()
+            bm.from_mesh(obj.data)
+            bmesh.ops.bevel(bm, geom=list(bm.edges), offset=min(size)*.10,
+                            segments=2, affect='EDGES', profile=.5)
+            bm.to_mesh(obj.data)
+            bm.free()
+        return obj
 
     def cone(self, loc, r1, r2, depth, mat, n=12, axis=(0,0,1), parent=None, label='Cylinder'):
-        return frustum(self.name(label),loc,r1,r2,depth,mat,self.col,parent or self.obj,n,axis)
+        return frustum(self.name(label),loc,r1,r2,depth,mat,self.col,parent or self.obj,n+4,axis)
 
     def ball(self, loc, scale, mat, n=12, rings=5, dome=False, label='Facets', parent=None):
-        return ellipsoid(self.name(label),loc,scale,mat,self.col,parent or self.obj,n,rings,dome)
+        obj = ellipsoid(self.name(label),loc,scale,mat,self.col,parent or self.obj,n+4,rings+2,dome)
+        for face in obj.data.polygons:
+            face.use_smooth = True
+        return obj
 
     def bar(self, a,b,r,mat,n=8,label='Beam',parent=None):
         return beam(self.name(label),a,b,r,mat,self.col,parent or self.obj,n)
@@ -315,7 +353,18 @@ class Kit:
                          [(0,1,4),(3,5,2),(0,4,5,3),(1,2,5,4),(3,2,1,0)],mat,'GableRoof')
 
     def finish(self, filename, vehicle=False):
-        normalize_asset(self.obj,length=4.5 if vehicle else None)
+        # Batch static pieces for the web renderer while retaining animated pivots.
+        for pivot in [o for o in descendants(self.obj) if o.type == 'EMPTY']:
+            pieces = [o for o in pivot.children if o.type == 'MESH']
+            if len(pieces) > 1:
+                with bpy.context.temp_override(active_object=pieces[0], selected_editable_objects=pieces):
+                    bpy.ops.object.join()
+        normalize_asset(self.obj)
+        if vehicle:
+            fleet=json.loads((PROJECT_ROOT/'atlas/vehicle-dimensions.json').read_text(encoding='utf8'))['vehicles']
+            spec=next(v for v in fleet.values() if v['asset']==filename)
+            _,low,high=asset_stats(self.obj)
+            self.obj.scale=tuple(value/(high[i]-low[i]) for i,value in enumerate((spec['width'],spec['length'],spec['height'])))
         _,lo,hi=asset_stats(self.obj)
         if abs(lo[2])>1e-5 or abs(lo[0]+hi[0])>1e-5 or abs(lo[1]+hi[1])>1e-5:
             raise RuntimeError('Bottom-centre origin validation failed: '+self.obj.name)
