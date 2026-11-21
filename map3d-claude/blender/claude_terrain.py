@@ -3,7 +3,7 @@
 Run inside Blender (via the Blender MCP or the Text Editor). Builds into its own collection
 CL_Terrain and exports map3d-claude/assets/terrain.glb.
 
-Data: corrected Natural Earth coast (+road buffer), LINZ 8 m DEM grid, OSRM road polylines
+Data: LINZ Topo50 mainland and lakes, Natural Earth outer islands, LINZ 8 m DEM grid, OSRM road polylines
 with DEM elevations, real lake levels. Same projection as the rest of the project:
 X = (lon-170.5)*8.008, Y = (lat+44)*11.132, Z = elev_m/10000*5  (1 unit = 10 km, 5x vertical).
 """
@@ -16,7 +16,7 @@ ROOT = 'C:/Users/seabo/Documents/GitHub/our_honeymoon'
 DATA = ROOT + '/map3d/blender/data'
 OUT = ROOT + '/map3d-claude/assets'
 EX = 5 / 10000
-STEP = 0.14
+STEP = 0.107
 
 def P(lon, lat): return ((lon - 170.5) * 8.008, (lat + 44.0) * 11.132)
 
@@ -55,14 +55,11 @@ def flat_material(name, hexcol, rough=.6):
     b.inputs['Base Color'].default_value = srgb_lin(hexcol) + [1]; b.inputs['Roughness'].default_value = rough
     return m
 
-def inside_mask(x, y, ring):
-    ring = np.asarray(ring); ax, ay = ring[:, 0], ring[:, 1]; bx, by = np.roll(ax, -1), np.roll(ay, -1)
-    m = np.zeros(x.shape, bool)
-    for s in range(0, len(ax), 64):  # chunk edges to bound memory
-        A, B, C, D = ax[s:s+64, None], ay[s:s+64, None], bx[s:s+64, None], by[s:s+64, None]
-        hit = ((B > y[None]) != (D > y[None])) & (x[None] < A + (y[None] - B) * (C - A) / np.where(D - B == 0, 1e-12, D - B))
-        m ^= np.logical_xor.reduce(hit, axis=0)
-    return m
+# Use the same point-in-polygon convention for both terrain editions.
+from pathlib import Path
+import sys
+sys.path.insert(0,str(Path(DATA).parent/'scripts'))
+from terrain_math import inside as inside_mask
 
 def cdt(points, rings):
     pts = [Vector((float(a), float(b))) for a, b in points]; edges = []; off = 0
@@ -126,8 +123,9 @@ def build_island(name, ring_ll, step, lakes, col, flat_m=None):
     extra = []
     if flat_m is None and len(road_xy):
         rm = inside_mask(road_xy[:, 0], road_xy[:, 1], ring); extra = road_xy[rm]
-    pts = np.vstack([ring] + lake_rings + [np.column_stack([gx, gy])] + ([extra] if len(extra) else []))
-    xy, faces = cdt(pts, [ring] + lake_rings)
+    holes=[np.array([P(lo,la) for lo,la in island]) for L in lakes for island in L.get('islands',[])]
+    pts = np.vstack([ring] + lake_rings + holes + [np.column_stack([gx, gy])] + ([extra] if len(extra) else []))
+    xy, faces = cdt(pts, [ring] + lake_rings + holes)
     F = np.array(faces); cen = xy[F].mean(1); keep = inside_mask(cen[:, 0], cen[:, 1], ring); F = F[keep]
     lon, lat = to_ll(xy[:, 0], xy[:, 1])
     if flat_m is not None:
@@ -149,8 +147,14 @@ def build_island(name, ring_ll, step, lakes, col, flat_m=None):
                 if d[k] < .12:
                     w = 1.0 if d[k] < .04 else 1 - (d[k] - .04) / .08; w = w * w * (3 - 2 * w)
                     h[v] = min(h[v], h[v] * (1 - w) + road_e[c[k]] * w)
-        for L, lr in zip(lakes, lake_rings):  # carve lake beds just under the surface
-            mm = inside_mask(xy[:, 0], xy[:, 1], lr); h[mm] = np.minimum(h[mm], L['elevation_m'] - 25)
+        if lakes:
+            from pathlib import Path
+            import runpy
+            terrain_math=runpy.run_path(str(Path(ROOT)/'map3d/blender/scripts/terrain_math.py'))
+            definitions=[dict(xy=lr,elevation_m=lake['elevation_m'],
+                holes=[np.array([P(lo,la) for lo,la in hole]) for hole in lake.get('islands',[])])
+                for lake,lr in zip(lakes,lake_rings)]
+            h=terrain_math['carve_lake_beds'](xy,h,definitions)
     z = np.maximum(h * EX, .012)
     # slope per vertex (real-world rise/run, from adjacent faces)
     xyz = np.column_stack([xy, z]); nrm = np.cross(xyz[F[:, 1]] - xyz[F[:, 0]], xyz[F[:, 2]] - xyz[F[:, 0]])
@@ -173,8 +177,11 @@ def build_lake(L, col, parent):
     x0, y0 = lr.min(0); x1, y1 = lr.max(0)
     gx, gy = np.meshgrid(np.arange(x0 + .05, x1, .1), np.arange(y0 + .05, y1, .1)); gx, gy = gx.ravel(), gy.ravel()
     m = inside_mask(gx, gy, lr)
-    xy, faces = cdt(np.vstack([lr, np.column_stack([gx[m], gy[m]])]), [lr])
-    F = np.array(faces); cen = xy[F].mean(1); F = F[inside_mask(cen[:, 0], cen[:, 1], lr)]
+    rings=[lr]+[np.array([P(lo,la) for lo,la in island]) for island in L.get('islands',[])]
+    xy, faces = cdt(np.vstack(rings+[np.column_stack([gx[m],gy[m]])]),rings)
+    F = np.array(faces); cen = xy[F].mean(1); wet=inside_mask(cen[:,0],cen[:,1],lr)
+    for island in rings[1:]:wet &= ~inside_mask(cen[:,0],cen[:,1],island)
+    F=F[wet]
     z = L['elevation_m'] * EX
     me = bpy.data.meshes.new('Lake_' + L['name'] + '_Mesh'); me.from_pydata([(a, b, z) for a, b in xy], [], F.tolist()); me.update()
     me.materials.append(flat_material('CL_LakeWater', '#3FB8C4', .25))
@@ -188,7 +195,7 @@ def export(root, path, normals=True):
     while stack: o = stack.pop(); nodes.append(o); stack += list(o.children)
     for o in nodes: o.hide_set(False); o.select_set(True)
     bpy.context.view_layer.objects.active = root
-    kw = dict(filepath=path, export_format='GLB', use_selection=True, export_apply=True, export_yup=True,
+    kw = dict(filepath=path, export_format='GLB', use_selection=True,use_active_scene=True, export_apply=True, export_yup=True,
               export_vertex_color='ACTIVE', export_texcoords=False, export_animations=False, export_cameras=False, export_lights=False)
     if not normals: kw['export_normals'] = False
     r = bpy.ops.export_scene.gltf(**kw)
@@ -205,8 +212,12 @@ stew, n2 = build_island('StewartIsland', land['StewartIsland'], .22, [], col); s
 north, n3 = build_island('NorthIslandHint', land['NorthIslandHint'], .5, [], col, flat_m=80); north.parent = terrain
 lroot = bpy.data.objects.new('Lakes', None); col.objects.link(lroot); lroot.parent = terrain
 nl = sum(build_lake(L, col, lroot) for L in lakes)
-import os; os.makedirs(OUT, exist_ok=True)
+import os, base64
+from pathlib import Path
+os.makedirs(OUT, exist_ok=True)
 export(terrain, OUT + '/terrain.glb', normals=False)
+wrapper=Path(ROOT)/'map3d-claude/web_assets/terrain_south_island.json'
+wrapper.write_text(json.dumps({'format':'glb-base64','name':'terrain_south_island','data':base64.b64encode((Path(OUT)/'terrain.glb').read_bytes()).decode()},separators=(',',':')),encoding='utf8')
 print('terrain tris %d (+stewart %d, north %d, lakes %d) in %.1fs; glb %.0f KB' % (ntri, n2, n3, nl, time.time() - t0, os.path.getsize(OUT + '/terrain.glb') / 1000))
 for nm, lo, la in [('Aoraki', 170.142, -43.595), ('Lindis', 169.66, -44.586), ('Haast', 169.356, -44.105), ("Arthur's", 171.56, -42.94)]:
     print(nm, 'DEM %.0f m' % float(dem_at(np.array([lo]), np.array([la]))[0]))

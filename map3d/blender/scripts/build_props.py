@@ -45,18 +45,46 @@ def church(k):
     k.cone((0,.459,.71),.043,.028,.065,'tussock',n=8,label='Bell')
     k.bar((0,-.41,.70),(0,-.41,.84),.012,'road')
     k.bar((-.045,-.41,.79),(.045,-.41,.79),.012,'road')
+    # Individually laid schist on the nave, with staggered mortar courses.
+    for side in (-1,1):
+        for course in range(6):
+            for bay in range(5):
+                y=-.36+bay*.126+(.034 if course%2 else 0)
+                if bay in (0,2,4) and course in (2,3):
+                    continue
+                k.cube((side*.242,y,.11+.070*course),(.018,.108,.050),
+                       ('#afa18a','#b6ac98','#9c998b')[(course+bay*2)%3],'Schist')
+        for y in (-.28,-.03,.20):
+            k.ball((side*.249,y,.435),(.012,.044,.045),'glass',n=12,rings=4,label='ArchedLight')
+            k.bar((side*.262,y,.248),(side*.262,y,.456),.005,'cream',6,label='Mullion')
+            k.bar((side*.262,y-.042,.36),(side*.262,y+.042,.36),.005,'cream',6,label='Transom')
+        for y in (-.34,.16):
+            k.cube((side*.263,y,.24),(.064,.070,.36),'stone','Buttress')
+        for tile in range(9):
+            y=-.424+tile*.088
+            k.bar((0,y,.744),(side*.279,y,.545),.008,'rock',n=5,label='StandingSeam')
+    for i in range(3):
+        k.cube((0,.48+i*.052,.075-i*.020),(.23+i*.031,.075,.055),'stone','Doorstep')
 
 
 def observatory(k):
     k.cone((0,0,.035),.45,.45,.07,'rock',n=16,label='Platform')
     k.cone((0,0,.23),.31,.31,.37,'cream',n=16,label='DomeDrum')
-    k.ball((0,0,.415),(.34,.34,.33),'snow',n=16,rings=5,dome=True,label='ObservatoryDome')
+    k.ball((0,0,.415),(.34,.34,.33),'snow',n=48,rings=14,dome=True,label='ObservatoryDome')
     # A narrow dark strip follows the dome's meridian, suggesting an open slit.
     for i in range(7):
         a=(i+.5)*math.pi/14
         k.cube((0,-.344*math.cos(a),.415+.334*math.sin(a)),(.055,.055,.052),'road','DomeSlit')
     k.bar((0,-.15,.49),(0,-.39,.66),.039,'rock',label='Telescope')
     k.cube((0,-.315,.20),(.12,.026,.24),'cedar','Door')
+    for i in range(16):
+        a=i*math.tau/16
+        for j in range(6):
+            lo=j*math.pi/12; hi=(j+1)*math.pi/12
+            def rim(t):
+                return (.342*math.cos(t)*math.cos(a),.342*math.cos(t)*math.sin(a),.415+.333*math.sin(t))
+            k.bar(rim(lo),rim(hi),.005,'rock',n=5,label='DomeRib')
+    annulus(k,(0,0,.411),.35,.306,.031,'rock',n=36)
 
 
 def lone_tree(k):
@@ -86,7 +114,7 @@ def hot_tub(k):
 def mosque(k):
     k.cube((0,0,.025),(.90,.75,.05),'stone','Courtyard')
     k.cube((-.06,0,.25),(.58,.51,.45),'cream','PrayerHall')
-    k.ball((-.06,0,.475),(.27,.25,.25),'snow',n=16,rings=5,dome=True,label='Dome')
+    k.ball((-.06,0,.475),(.27,.25,.25),'snow',n=48,rings=14,dome=True,label='Dome')
     k.bar((-.06,0,.71),(-.06,0,.80),.012,'tussock')
     k.cone((.34,.15,.43),.075,.060,.81,'cream',n=10,label='Minaret')
     k.cone((.34,.15,.72),.095,.095,.045,'stone',n=10,label='Balcony')
@@ -139,6 +167,8 @@ def ski_lift(k):
         x=-.44+i*.44; y=-.27+i*.27; z=.09+i*.09
         k.bar((x,y,z),(x,y,z+.52),.026,'rock',label='LiftTower')
         k.cube((x,y,z+.52),(.25,.055,.035),'road','CrossArm')
+        for offset in (-.10,.10):
+            k.cone((x+offset,y,z+.54),.026,.026,.026,'rock',n=12,axis=(1,0,0),label='Sheave')
         stations.append((x,y,z+.56))
     for a,b in zip(stations,stations[1:]):
         for offset in (-.10,.10):
@@ -148,19 +178,39 @@ def ski_lift(k):
             k.bar((x,y,z),(x,y,z-.15),.009,'road',n=5,label='ChairHanger')
             k.cube((x,y,z-.16),(.16,.10,.025),'red','ChairSeat')
             k.cube((x,y+.045,z-.105),(.16,.02,.10),'red','ChairBack')
+            k.bar((x-.076,y+.04,z-.10),(x-.076,y-.045,z-.105),.009,'rock',label='SafetyBar')
+            k.bar((x-.076,y-.045,z-.105),(x+.076,y-.045,z-.105),.009,'rock',label='SafetyBar')
 
 
 def glacier(k):
-    # Gaps between irregular ice columns read as crevasses from the map camera.
-    for row in range(5):
-        for column in range(4):
-            x=(column-1.5)*.20+(.022 if row%2 else 0)
-            y=(row-2)*.19
-            height=.12+.055*row+.09*(.5+.5*math.sin(column*3.1+row*1.7))
-            obj=k.cone((x,y,height/2),.093,.080,height,'ice' if (row+column)%3 else 'snow',n=5,label='IceSerac')
-            obj.rotation_euler.z=.21*row+.13*column
-            # Thin snow cap leaves the dark blue vertical faces visible.
-            k.cone((x,y,height+.006),.094,.078,.018,'snow',n=5,label='SnowCap')
+    # Leaning séracs split along transverse crevasses. Low blue facets shade
+    # into a ragged accumulation of snow on the uphill edge of each crown.
+    import random
+    rng=random.Random(420)
+    for row in range(10):
+        for col in range(7):
+            y=(row-4.5)*.112
+            x=(col-3)*.111*(.79+.21*math.cos(y*2.7))+.055*math.sin(y*4)
+            h=.14+row*.030+.09*math.sin(col*1.7+row*.7)+rng.uniform(0,.085)
+            angle=rng.uniform(-.24,.24)
+            outline=[(math.cos(i*math.tau/7+angle)*rng.uniform(.061,.072),
+                      math.sin(i*math.tau/7+angle)*rng.uniform(.065,.083)) for i in range(7)]
+            verts=[]
+            for width,level,lean in ((.88,0,0),(1,.37,.006),(.92,.75,.019),(.73,1,.032)):
+                for dx,dy in outline:
+                    verts.append((x+dx*width+lean,y+dy*width+lean*.5,h*level+(dy*.29+rng.uniform(-.016,.016))*level))
+            verts.append((x+.032,y+.01,h+.013))
+            faces=[tuple(reversed(range(7)))]
+            for j in range(3):
+                for i in range(7):
+                    a=j*7+i; b=j*7+(i+1)%7
+                    faces.extend([(a,b,b+7),(a,b+7,a+7)])
+            faces.extend((21+i,21+(i+1)%7,28) for i in range(7))
+            ice=k.mesh(verts,faces,'#307f91','Serac')
+            for c in ('#62b7c5','#b2e1e4','#edf6f1'):
+                ice.data.materials.append(material(c))
+            for face in ice.data.polygons:
+                face.material_index=min(3,max(0,(face.index-1)//14))
 
 
 def sheep(k):
@@ -177,7 +227,7 @@ def sheep(k):
 def pin(k):
     # A red extruded frame with actual empty heart aperture, no painted inset.
     # Radial correspondence builds the ring without booleans or fragile holes.
-    n=48; inner=[]; outer=[]
+    n=88; inner=[]; outer=[]
     for i in range(n):
         t=math.tau*i/n
         x=.0135*16*math.sin(t)**3
@@ -204,10 +254,20 @@ BUILDERS=[('church_stone','StoneChurch',church),('observatory','Observatory',obs
           ('glacier_ice','GlacierIce',glacier),('pine_tree','PineTree',lambda k:tree(k,pine=True)),
           ('beech_tree','BeechTree',tree),('sheep','Sheep',sheep),('pin','Pin',pin)]
 
+exec(compile((PROJECT_ROOT / 'map3d/blender/scripts/build_wildlife.py').read_text(encoding='utf-8'), 'build_wildlife.py', 'exec'), globals())
+BUILDERS=[(file,name,{'pine_tree':alpine_pine,'beech_tree':beech,'sheep':merino}.get(file,builder)) for file,name,builder in BUILDERS]
+
+exec(compile((PROJECT_ROOT/'map3d/blender/scripts/landmark_details.py').read_text(encoding='utf8'),'landmark_details.py','exec'),globals())
+
 import bmesh
 for _file,_name,_builder in BUILDERS:
+    if globals().get('ONLY_ASSETS') and _file not in ONLY_ASSETS:
+        continue
     _kit=Kit(_name,reset_collection('HM_'+_name))
-    _builder(_kit)
+    if _file=='glowworm_cave':sculpt_grotto(_kit)
+    elif _file=='lone_tree':sculpt_willow(_kit)
+    else:_builder(_kit)
+    if _file in LANDMARK_DETAILS:LANDMARK_DETAILS[_file](_kit)
     for _obj in descendants(_kit.obj):
         if _obj.type=='MESH':
             _bm=bmesh.new(); _bm.from_mesh(_obj.data)

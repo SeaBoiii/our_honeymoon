@@ -1,6 +1,6 @@
 <title>Honeymoon Vlog Claude Cut</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="../atlas/type.css">
 <style>
 /* Layout: full-bleed WebGL (globe for the flights, South Island diorama for the trip). Vlog layer on top: REC stamp, chapter cards, subtitles, letterbox. Day list docked left, transport bar bottom. */
 :root{
@@ -99,6 +99,7 @@ body.rolling #rec i{opacity:1;animation:blink 1.2s steps(2) infinite}
 }
 @media (prefers-reduced-motion:reduce){body.rolling #rec i{animation:none}#chapter,.lb{transition:none}}
 </style>
+<link rel="stylesheet" href="../atlas/map.css">
 
 <div id="app">
   <canvas id="c" aria-label="3D travel map: Singapore to Christchurch and the South Island honeymoon route"></canvas>
@@ -110,7 +111,7 @@ body.rolling #rec i{opacity:1;animation:blink 1.2s steps(2) infinite}
 
   <aside id="side" class="glass" data-open="false">
     <header>
-      <div><span class="sub">24 Aug – 7 Sep 2027 · Claude cut</span><h1>The South Island loop</h1><a class="itin" href="https://claude.ai/artifact/U9TV22y5gkKzKZtULwJ8xp" target="_blank" rel="noopener">Full itinerary and hotels ↗</a></div>
+      <div><span class="sub">24 Aug – 7 Sep 2027 · Claude cut</span><h1>The South Island loop</h1><a class="itin" href="https://claude.ai/artifact/U9TV22y5gkKzKZtULwJ8xp" target="_blank" rel="noopener">← Itinerary and stays</a></div>
       <button class="btn" id="toggle" aria-expanded="false" aria-controls="days">Days</button>
     </header>
     <ol id="days"></ol>
@@ -135,17 +136,28 @@ body.rolling #rec i{opacity:1;animation:blink 1.2s steps(2) infinite}
     <button class="btn" id="follow" aria-pressed="true">Follow</button>
     <button class="btn" id="overview">Map</button>
   </div>
-  <div id="status" class="glass">Loading the map…</div>
+  <div id="status" role="status" class="glass">Loading the map…</div>
+  <noscript><p class="glass" style="position:absolute;inset:25% 10% auto;padding:20px;z-index:8">Enable JavaScript to explore the map, or <a href="https://claude.ai/artifact/U9TV22y5gkKzKZtULwJ8xp">read the itinerary</a>.</p></noscript>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/GLTFLoader.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="../atlas/three-r147/three.min.js"></script>
+<script src="../atlas/three-r147/GLTFLoader.js"></script>
+<script src="../atlas/three-r147/OrbitControls.js"></script>
+<script src="../atlas/surface-travel.js"></script>
+<script src="../atlas/scenery.js"></script>
+<script src="../atlas/landscape.js"></script>
+<script src="../atlas/assets.js"></script>
 <script>
 (function(){
 'use strict';
 const $=id=>document.getElementById(id);
 // ---------- shared projection for the South Island diorama (matches map3d/ASSET_SPEC.md) ----------
+function mapUnavailable(){
+  $('status').hidden=false;
+  $('status').innerHTML='This map needs WebGL. <a href="https://claude.ai/artifact/U9TV22y5gkKzKZtULwJ8xp">Open the illustrated itinerary</a>.';
+  $('chapter').classList.remove('show');
+}
+if(!window.THREE){mapUnavailable();return;}
 const KX=8.008, KY=11.132;
 const P=(lat,lon)=>({x:(lon-170.5)*KX, z:-(lat+44)*KY});
 const rev=a=>a.slice().reverse();
@@ -190,11 +202,11 @@ const LEGS=[
  [4,'car','r:mtcook-wanaka','Back through Twizel and Omarama, over Lindis Pass in daylight.','09:00'],
  [4,'stay',[-44.696,169.125],'Sunset at That Wānaka Tree.','17:40',3.5,.55],
  [5,'car','r:wanaka-teanau','Through Cromwell, a big shop in Frankton, then down to Te Anau.','09:00'],
- [5,'boat',[TEA,[-45.37,167.70],[-45.33,167.68],[-45.29,167.66]],'Across Lake Te Anau to the glowworm caves.','16:30'],
- [5,'stay',[-45.29,167.66],'A silent boat ride under thousands of glowworms.','17:15',3,.6],
- [5,'boat',[[-45.29,167.66],[-45.33,167.68],[-45.37,167.70],TEA],'Back across the lake for dinner.','18:15'],
+ [5,'boat','b:te-anau','Across Lake Te Anau to the glowworm caves.','16:30'],
+ [5,'stay',[-45.29495,167.7269],'A silent boat ride under thousands of glowworms.','17:15',3,.6],
+ [5,'boat','b:te-anau:back','Back across the lake for dinner.','18:15'],
  [6,'coach','r:teanau-milford','Coach day: Eglinton Valley, the Homer Tunnel, then down to Milford.','08:00'],
- [6,'boat',[MIL,[-44.645,167.885],[-44.615,167.85],[-44.59,167.81],[-44.615,167.85],[-44.645,167.885],MIL],'Mitre Peak, waterfalls, all the way out to the Tasman Sea.','11:30'],
+ [6,'boat','b:milford:round','Mitre Peak, waterfalls, all the way out to the Tasman Sea.','11:30'],
  [6,'coach','r:milford-teanau','Long ride back. A packed halal lunch never tasted so good.','14:00'],
  [7,'car','r:teanau-qt','Te Anau to Queenstown along Lake Wakatipu.','10:30'],
  [7,'stay',QT,'Lakefront walk and halal fish and chips at Erik\'s.','18:30',3,.4],
@@ -211,24 +223,26 @@ const LEGS=[
  [11,'heli',[[-43.50,170.29],[-43.47,170.25],[-43.42,170.20],FJ],'Back down to Franz Josef.','11:00'],
  [12,'car','r:franz-chc','Hokitika, then Arthur\'s Pass back over the Alps to Christchurch.','08:00'],
  [13,'car','r:chc-akaroa','Over the hill to Akaroa.','09:00'],
- [13,'boat',[AKA,[-43.835,172.955],[-43.87,172.97],[-43.835,172.955],AKA],'Harbour cruise. Hector\'s dolphins, one of the world\'s smallest.','11:00'],
+ [13,'boat','b:akaroa:round','Harbour cruise. Hector\'s dolphins, one of the world\'s smallest.','11:00'],
  [13,'car','r:akaroa-air','Farewell dinner, then a last night near the airport.','16:00'],
  [14,'plane',rev(flightNZ),'SQ298 at 10:50. One last look at the Alps.','10:50'],
  [14,'gfly',[AIR,SIN],'Ten hours home, holding hands the whole way.','11:20'],
  [14,'gstay',SIN,'Home in Singapore at 17:40. Married, tired, happy.','17:40',4]
 ];
 const STOPS=[['Christchurch',CHC,'3 nights'],['Lake Tekapo',TEK,'1'],['Aoraki/Mt Cook',MTC,'1'],['Wānaka',WAN,'1'],['Te Anau',TEA,'2'],['Queenstown',QT,'3'],['Franz Josef',FJ,'2'],['Milford Sound',MIL,'day trip'],['Akaroa',AKA,'day trip']];
-const MODE={car:{c:'#c8432f',v:3.6,name:'Drive',len:.42},coach:{c:'#e0a030',v:3.4,name:'Coach',len:.55},boat:{c:'#2bb0c0',v:.9,name:'Boat',len:.45},
+const MODE={car:{c:'#c8432f',v:3.6,name:'Drive',len:.066},coach:{c:'#e0a030',v:3.4,name:'Coach',len:.084},boat:{c:'#2bb0c0',v:.9,name:'Boat',len:.015},
   heli:{c:'#d9467a',v:.9,name:'Helicopter',len:.5},plane:{c:'#f4f7f8',v:7,name:'Flight',len:1.4},stay:{name:'Stop'},gfly:{name:'Flight'},gstay:{name:'Stop'}};
 
 // ---------- renderer, two scenes ----------
 const canvas=$('c');
-const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+let renderer;
+try{renderer=new THREE.WebGLRenderer({canvas,antialias:true});}
+catch(error){mapUnavailable();return;}
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.outputEncoding=THREE.sRGBEncoding;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-const camera=new THREE.PerspectiveCamera(42,1,.02,1200);
+const camera=new THREE.PerspectiveCamera(42,1,.001,1200);
 const controls=new THREE.OrbitControls(camera,canvas);
 controls.enableDamping=true;
 
@@ -275,18 +289,24 @@ sea.rotation.x=-Math.PI/2;scene.add(sea);
 const nzStars=stars(1800,380);nzStars.material.opacity=0;nzStars.position.y=-40;scene.add(nzStars);
 
 // ---------- height grids from the terrain mesh ----------
+const terrainSurface=SurfaceTravel.terrainIndex(),scenery=[];
 const G={x0:-40,z0:-44,step:.08,nx:1000,nz:1050};
 const land=new Float32Array(G.nx*G.nz).fill(-1),water=new Float32Array(G.nx*G.nz).fill(-1);
 function raster(mesh,arr){
   mesh.updateMatrixWorld(true);
   const g=mesh.geometry,pos=g.attributes.position,idx=g.index,n=pos.count,m=mesh.matrixWorld,v=new THREE.Vector3();
   const X=new Float32Array(n),Y=new Float32Array(n),Z=new Float32Array(n);
+  const normals=arr===land&&g.attributes.normal?new Float32Array(n*3):null;
+  const normalScratch=new THREE.Vector3(),normalMatrix=normals?new THREE.Matrix3().getNormalMatrix(m):null;
   for(let i=0;i<n;i++){v.fromBufferAttribute(pos,i).applyMatrix4(m);X[i]=v.x;Y[i]=v.y;Z[i]=v.z;
+    if(normals)normalScratch.fromBufferAttribute(g.attributes.normal,i).applyNormalMatrix(normalMatrix).toArray(normals,3*i);
     const ci=Math.floor((v.x-G.x0)/G.step),cj=Math.floor((v.z-G.z0)/G.step);
     if(ci>=0&&cj>=0&&ci<G.nx&&cj<G.nz){const k=cj*G.nx+ci;if(v.y>arr[k])arr[k]=v.y;}}
+  const register=arr===land?terrainSurface.mesh(X,Y,Z,idx?.array,normals):null;
   const T=idx?idx.count/3:n/3;
   for(let t=0;t<T;t++){
     const a=idx?idx.getX(3*t):3*t,b=idx?idx.getX(3*t+1):3*t+1,c=idx?idx.getX(3*t+2):3*t+2;
+    if(register)register(t,a,b,c);
     const ax=X[a],az=Z[a],bx=X[b],bz=Z[b],cx=X[c],cz=Z[c];
     const d=(bz-cz)*(ax-cx)+(cx-bx)*(az-cz);if(Math.abs(d)<1e-12)continue;
     const i0=Math.max(0,Math.floor((Math.min(ax,bx,cx)-G.x0)/G.step-.5)),i1=Math.min(G.nx-1,Math.ceil((Math.max(ax,bx,cx)-G.x0)/G.step-.5));
@@ -307,21 +327,13 @@ function sample(arr,x,z){
 const H=(x,z)=>sample(land,x,z),W=(x,z)=>sample(water,x,z);
 
 // ---------- assets (base64-wrapped GLB in JSON; the host serves .json, not .glb) ----------
-const loader=new THREE.GLTFLoader();
-const load=n=>fetch('web_assets/'+n+'.json').then(r=>{if(!r.ok)throw 0;return r.json();}).then(j=>{
-  const bin=atob(j.data),buf=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);
-  return new Promise(res=>loader.parse(buf.buffer,'',g=>res(g.scene),()=>res(null)));}).catch(()=>null);
+const load=atlasLoader();
 function fit(obj,size,fallbackColor){
+  if(obj)obj=obj.clone(true);
   if(!obj){const m=new THREE.Mesh(new THREE.BoxGeometry(.5,.35,1),new THREE.MeshStandardMaterial({color:fallbackColor||'#999'}));m.position.y=.175;obj=new THREE.Group();obj.add(m);}
   const box=new THREE.Box3().setFromObject(obj),s=new THREE.Vector3(),c=new THREE.Vector3();box.getSize(s);box.getCenter(c);
   const k=size/Math.max(s.x,s.y,s.z,1e-6);obj.scale.multiplyScalar(k);obj.position.set(-c.x*k,-box.min.y*k,-c.z*k);
   const w=new THREE.Group();w.add(obj);return w;
-}
-function instance(tpl,mats){
-  const grp=new THREE.Group();tpl.updateMatrixWorld(true);
-  tpl.traverse(o=>{if(!o.isMesh)return;const im=new THREE.InstancedMesh(o.geometry,o.material,mats.length),m=new THREE.Matrix4();
-    mats.forEach((t,i)=>{m.multiplyMatrices(t,o.matrixWorld);im.setMatrixAt(i,m);});grp.add(im);});
-  return grp;
 }
 const DIVIDE=[[-41.3,172.4],[-42.3,171.9],[-42.9,171.6],[-43.6,170.2],[-44.3,169.0],[-44.8,168.3],[-45.5,167.9],[-46.3,167.6]].map(p=>P(p[0],p[1]));
 function westOfDivide(x,z){for(let i=0;i<DIVIDE.length-1;i++){const a=DIVIDE[i],b=DIVIDE[i+1];if(z>=a.z&&z<=b.z){const t=(z-a.z)/(b.z-a.z);return x<a.x+(b.x-a.x)*t;}}return z>=DIVIDE[0].z;}
@@ -332,15 +344,10 @@ function boxSmooth(a,w){const n=a.length,ps=new Float64Array(n+1),o=new Float32A
 function maxFilter(a,w){const n=a.length,o=new Float32Array(n);for(let i=0;i<n;i++){let m=-1e9;for(let k=Math.max(0,i-w);k<=Math.min(n-1,i+w);k++)if(a[k]>m)m=a[k];o[i]=m;}return o;}
 const ease=x=>x<=0?0:x>=1?1:x*x*(3-2*x);
 const EXAG=5/10000; // metres -> scene units (1 unit = 10 km, 5x vertical), matches ASSET_SPEC.md
-function heightProfile(sp,mode,arrive,step,roadZ){
-  const n=sp.length,g=new Float32Array(n);sp.forEach((v,i)=>g[i]=mode==='boat'?Math.max(W(v.x,v.z),0):Math.max(H(v.x,v.z),roadZ?roadZ[i]:0,.02));
+function heightProfile(sp,mode,arrive,step){
+  const n=sp.length,g=sp.map(v=>Math.max(H(v.x,v.z),.02));
   const cells=d=>Math.max(1,Math.round(d/step));let y;
-  if(mode==='boat'){y=g.map(h=>h+.008);}
-  else if(mode==='car'||mode==='coach'){
-    // roads don't spike: smooth twice, never sink into the ground, then a light final pass
-    y=boxSmooth(boxSmooth(g,cells(.25)),cells(.25));for(let i=0;i<n;i++)y[i]=Math.max(y[i],g[i]);y=boxSmooth(y,cells(.08));
-    for(let i=0;i<n;i++)y[i]=Math.max(y[i],g[i])+.012;}
-  else if(mode==='heli'){
+  if(mode==='heli'){
     // climb to a safe band over the ridges, cruise level-ish, settle on the pad / névé
     const clear=boxSmooth(maxFilter(g,cells(.6)),cells(.4));y=new Float32Array(n);
     for(let i=0;i<n;i++){const t=i/(n-1),k=ease(Math.min(t,1-t)/.22);y[i]=g[i]+.02+(Math.max(clear[i]+.16,g[i]+.02)-g[i]-.02)*k;}
@@ -354,7 +361,7 @@ function heightProfile(sp,mode,arrive,step,roadZ){
 }
 
 // ---------- timeline ----------
-const legs=[];let TOTAL=0,ROUTES={};
+const legs=[];let TOTAL=0,ROUTES={},CRUISES={},fleet;
 function buildTimeline(){
   const tubes=new THREE.Group();scene.add(tubes);
   LEGS.forEach(([day,mode,path,cap,clock,dur,night])=>{
@@ -363,29 +370,35 @@ function buildTimeline(){
     else if(mode==='gfly'){L.pts=gcPath(path[0],path[1],400);L.dur=15;
       const tube=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(L.pts),400,.025,6),new THREE.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:.75}));gScene.add(tube);}
     else if(mode==='stay'){const p=P(path[0],path[1]);L.at=new THREE.Vector3(p.x,H(p.x,p.z),p.z);L.dur=dur;}
+    else if(['car','coach','boat'].includes(mode)){
+      const boat=mode==='boat';
+      const project=q=>{const p=P(...q);return new THREE.Vector3(p.x,0,p.z);};
+      L.travel=SurfaceTravel.forLeg(mode,path,ROUTES,CRUISES,project,terrainSurface.height,sea.position.y,EXAG);
+      L.key=path.slice(2).split(':')[0];
+      if(!L.travel)return;
+      L.pts=L.travel.points;L.len=L.travel.length;L.dur=L.travel.duration;L.km=L.travel.km;
+      if(boat){
+        const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(L.pts),new THREE.LineBasicMaterial({color:'#6cabae',transparent:true,opacity:.6}));
+        tubes.add(line);
+      }else tubes.add(SurfaceTravel.ribbon(L.travel,fleet.mapUnitsPerMetre,terrainSurface));
+    }
     else{
-      let ll=path,elev=null;if(typeof path==='string'){const r=ROUTES[path.slice(2)];ll=r?r.points:[];L.km=r&&r.km;elev=r&&r.elev;}
-      if(ll.length<2)return;
-      const proj=ll.map(q=>{const p=P(q[0],q[1]);return new THREE.Vector3(p.x,0,p.z);});
+      const proj=path.map(q=>{const p=P(...q);return new THREE.Vector3(p.x,0,p.z);});
       const curve=new THREE.CatmullRomCurve3(proj,false,'centripetal');
       const len=curve.getLength(),n=Math.max(12,Math.ceil(len/.03)),sp=curve.getSpacedPoints(n);
-      // real road elevation (LINZ DEM) carried along the route by distance
-      let roadZ=null;
-      if(elev&&elev.length===proj.length){const cum=[0];for(let i=1;i<proj.length;i++)cum.push(cum[i-1]+proj[i].distanceTo(proj[i-1]));
-        const tot=cum[cum.length-1]||1;roadZ=new Float32Array(sp.length);let k=0;
-        for(let i=0;i<sp.length;i++){const d=i/(sp.length-1)*tot;while(k<cum.length-2&&cum[k+1]<d)k++;
-          const f=Math.min(1,Math.max(0,(d-cum[k])/((cum[k+1]-cum[k])||1)));roadZ[i]=(elev[k]+(elev[k+1]-elev[k])*f)*EXAG;}}
-      heightProfile(sp,mode,mode==='plane'&&day<7,len/n,roadZ);
+      heightProfile(sp,mode,mode==='plane'&&day<7,len/n);
       L.pts=sp;L.len=len;L.dur=Math.max(1.5,len/MODE[mode].v);
       const tube=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(sp.map(v=>v.clone().add(new THREE.Vector3(0,.03,0)))),n,mode==='plane'?.03:.03,5),
         new THREE.MeshBasicMaterial({color:MODE[mode].c,transparent:true,opacity:.85}));
       const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(sp.map(v=>v.clone().setY(v.y+.03))),new THREE.LineBasicMaterial({color:MODE[mode].c,transparent:true,opacity:.9}));
-      tubes.add(tube,line);L.tube=tube;L.line=line;
+      L.flightPath=new THREE.Group();L.flightPath.add(tube,line);L.flightPath.visible=false;tubes.add(L.flightPath);
     }
-    L.start=TOTAL;TOTAL+=L.dur+(/stay/.test(mode)?0:.35);legs.push(L);
+    const previous=legs[legs.length-1];
+    L.cut=previous&&(L.world!==previous.world||(L.at||L.pts[0]).distanceTo(previous.at||previous.pts[previous.pts.length-1])>.35);
+    L.start=TOTAL;TOTAL+=L.dur+(L.travel||/stay/.test(mode)?0:.35);legs.push(L);
   });
 }
-function posOnLeg(L,u){const n=L.pts.length-1,f=u*n,i=Math.min(n-1,Math.floor(f)),t=f-i;
+function posOnLeg(L,u){if(L.travel)return SurfaceTravel.pose(L.travel,u);const n=L.pts.length-1,f=u*n,i=Math.min(n-1,Math.floor(f)),t=f-i;
   return {p:L.pts[i].clone().lerp(L.pts[i+1],t),d:L.pts[i+1].clone().sub(L.pts[i])};}
 
 // ---------- labels ----------
@@ -409,13 +422,13 @@ $('follow').onclick=()=>{follow=!follow;$('follow').setAttribute('aria-pressed',
 $('overview').onclick=()=>{follow=false;$('follow').setAttribute('aria-pressed','false');overview();};
 $('prev').onclick=()=>jumpDay(Math.max(0,(curDay<0?0:curDay)-1));
 $('next').onclick=()=>jumpDay(Math.min(14,(curDay<0?0:curDay)+1));
-$('scrub').oninput=e=>{if(!legs.length)return;started=true;t=TOTAL*e.target.value/1000;};
+$('scrub').oninput=e=>{if(!legs.length)return;started=true;t=TOTAL*e.target.value/1000;curLeg=-1;if(follow)requestAnimationFrame(snapCam);};
 $('toggle').onclick=()=>{const s=$('side'),o=s.dataset.open!=='true';s.dataset.open=String(o);$('toggle').setAttribute('aria-expanded',String(o));
   if(o){const cur=daysEl.querySelector('[aria-current="true"]');if(cur)cur.scrollIntoView({block:'center'});}};
 function jumpDay(d){if(!legs.length)return;if(!started){$('chapter').classList.remove('show');}started=true;const L=legs.find(l=>l.day===d);if(L){t=L.start+.001;curLeg=-1;if(follow)requestAnimationFrame(snapCam);}}
 function setWorld(w){if(w===world)return;world=w;
   if(w==='globe'){controls.minDistance=R*1.08;controls.maxDistance=80;controls.maxPolarAngle=Math.PI;}
-  else{controls.minDistance=.6;controls.maxDistance=160;controls.maxPolarAngle=Math.PI*.48;}
+  else{controls.minDistance=.008;controls.maxDistance=160;controls.maxPolarAngle=Math.PI*.48;}
   if(follow)snapCam();else overview();}
 function overview(){
   if(world==='globe'){controls.target.set(0,0,0);const mid=gv(-22,140,1).normalize();camera.position.copy(mid.multiplyScalar(R*2.9));}
@@ -426,7 +439,6 @@ function showDay(d){if(d===curDay)return;curDay=d;const D=DAYS[d];
   $('ctitle').textContent=(d?'Day '+d+' · ':'')+D.t;$('ctext').textContent=D.x;$('cfood').textContent='Halal: '+D.f;$('cstay').textContent='Tonight: '+NIGHTS[d];$('clock').textContent=D.w+' '+D.d;
   daysEl.querySelectorAll('button').forEach(b=>b.setAttribute('aria-current',String(+b.dataset.day===d)));
   const cur=daysEl.querySelector('[aria-current="true"]');if(cur)cur.scrollIntoView({block:'nearest'});
-  legs.forEach(L=>{if(L.tube){const o=L.day===d?.95:(L.mode==='plane'?.25:.38);L.tube.material.opacity=o;L.line.material.opacity=Math.max(o,.5);}});
   if(started)chapter(d?'Day '+d+' · '+D.w+' '+D.d:'Departure · '+D.w+' '+D.d,D.t,D.x.split('. ')[0].replace(/\.$/,''));
 }
 function stampFor(L){const D=DAYS[L.day],place=L.world==='globe'?(L.mode==='gstay'?'SINGAPORE':'SQ'+(L.day?'298':'297')+' · IN FLIGHT'):'NEW ZEALAND';
@@ -434,10 +446,11 @@ function stampFor(L){const D=DAYS[L.day],place=L.world==='globe'?(L.mode==='gsta
 
 // ---------- camera ----------
 const tmp=new THREE.Vector3(),lastTarget=new THREE.Vector3(),camT=new THREE.Vector3(),UP=new THREE.Vector3(0,1,0),ghost=new THREE.Object3D();
+function followDistance(L,speed=0){return MODE[L.mode]?.len?Math.max(.016,MODE[L.mode].len*10)+.20*speed:3.3;}
 function snapCam(){const L=legs[Math.max(0,curLeg)];if(!L)return;
   if(L.world==='globe'){const p=L.at||L.pts[0];controls.target.copy(p);camera.position.copy(p.clone().normalize().multiplyScalar(R+4)).add(new THREE.Vector3(0,-1.5,0));lastTarget.copy(p);return;}
-  const p=L.at||L.pts[0];const dist=(L.mode==='plane'?9:3.3);camT.copy(p);
-  controls.target.copy(p);camera.position.copy(p).add(new THREE.Vector3(-.5,1.1,1).normalize().multiplyScalar(dist));lastTarget.copy(p);}
+  const pose=L.at?{p:L.at}:posOnLeg(L,Math.min(1,Math.max(0,(t-L.start)/L.dur)));const p=pose.p,dist=followDistance(L);camT.copy(p);
+  controls.target.copy(p);camera.position.copy(p).add(new THREE.Vector3(-.65,L.travel?.55:1.1,1).normalize().multiplyScalar(dist));lastTarget.copy(p);}
 function followGlobe(L,target,u,dt){
   // pull back mid-flight so the whole route shows, push in at both ends
   const n=target.clone().normalize(),h=L.mode==='gfly'?3+11*Math.pow(Math.sin(Math.PI*u),.7):3.2;
@@ -446,17 +459,19 @@ function followGlobe(L,target,u,dt){
   if(L.mode==='gstay'&&playing)want.applyAxisAngle(n,(t-L.start)*.15);
   camera.position.lerp(want,1-Math.exp(-dt*2.2));controls.target.lerp(target,1-Math.exp(-dt*4));
 }
-function followNZ(L,goal,dt){
+function followNZ(L,goal,dt,velocity){
   // damped camera target: absorbs the small wiggles of real road geometry
-  if(legChangeT<.05&&camT.distanceTo(goal)>1.5)camT.copy(goal);else camT.lerp(goal,1-Math.exp(-dt*4.5));
+  if(legChangeT<.05&&camT.distanceTo(goal)>1.5)camT.copy(goal);else camT.lerp(goal,1-Math.exp(-dt*(L.travel?22:4.5)));
+  if(L.travel)camT.copy(goal);
   const target=camT;
   const delta=tmp.copy(target).sub(lastTarget);camera.position.add(delta);controls.target.copy(target);lastTarget.copy(target);
   const off=camera.position.clone().sub(target);
-  if(legChangeT<2){const want=L.mode==='plane'?9:3.3;off.setLength(off.length()+(want-off.length())*(1-Math.exp(-dt*2)));}
+  if(legChangeT<2||L.travel&&playing){const want=followDistance(L,velocity);off.setLength(off.length()+(want-off.length())*(1-Math.exp(-dt*2)));}
   if(L.mode==='stay'&&playing)off.applyAxisAngle(UP,dt*.25*speed);
   camera.position.copy(target).add(off);
-  let minY=Math.max(H(camera.position.x,camera.position.z),target.y)+.6;
-  for(let f=.2;f<1;f+=.2){const sx=target.x+(camera.position.x-target.x)*f,sz=target.z+(camera.position.z-target.z)*f;minY=Math.max(minY,(H(sx,sz)+.25-target.y*(1-f))/f);}
+  if(L.travel&&!L.travel.boat)return;
+  let minY=Math.max(terrainSurface.height(camera.position.x,camera.position.z)??0,target.y)+(L.travel?.0028:.06);
+  for(let f=.2;f<1;f+=.2){const sx=target.x+(camera.position.x-target.x)*f,sz=target.z+(camera.position.z-target.z)*f;minY=Math.max(minY,((terrainSurface.height(sx,sz)??0)+(L.travel?.001:.025)-target.y*(1-f))/f);}
   if(camera.position.y<minY)camera.position.y+=(minY-camera.position.y)*Math.min(1,dt*8);
 }
 
@@ -469,28 +484,31 @@ function frame(){
   if(started&&legs.length){
     let li=legs.findIndex((L,i)=>t>=L.start&&(i===legs.length-1||t<legs[i+1].start));if(li<0)li=0;
     const L=legs[li];
-    if(li!==curLeg){curLeg=li;legChangeT=0;$('leg').textContent=MODE[L.mode].name+(L.km?' · '+L.km+' km':'');$('sub').textContent=L.cap;$('sub').classList.add('on');$('stamp').textContent=stampFor(L);setWorld(L.world);}
+    const changed=li!==curLeg;
+    if(changed){for(const leg of legs){if(leg.flightPath)leg.flightPath.visible=leg===L;}curLeg=li;legChangeT=0;$('leg').textContent=MODE[L.mode].name+(L.km?' · '+L.km+' km':'');$('sub').textContent=L.cap;$('sub').classList.add('on');$('stamp').textContent=stampFor(L);setWorld(L.world);}
     legChangeT+=dt;showDay(L.day);
     // dip to black around globe <-> island cuts
-    legs.forEach((M,i)=>{if(i&&M.world!==legs[i-1].world){const d=Math.abs(t-M.start);if(d<.6)fade=Math.max(fade,1-d/.6);}});
-    let target;const u=Math.min(1,(t-L.start)/L.dur);
-    if(/stay/.test(L.mode)){target=L.at;}
+    legs.forEach((M,i)=>{if(M.cut){const d=Math.abs(t-M.start);if(playing&&d<.6)fade=Math.max(fade,1-d/.6);}});
+    let target,velocity=0;const u=Math.min(1,(t-L.start)/L.dur);
+    if(/stay/.test(L.mode)){target=L.at;if(active){active.visible=false;active=null;}}
     else{
-      const q=posOnLeg(L,u);target=q.p;
+      const q=posOnLeg(L,u);target=q.p;velocity=q.speed||0;
       const v=L.mode==='gfly'?gPlane:vehicles[L.mode];
-      if(v){const fresh=active!==v||legChangeT<.05;if(active&&active!==v)active.visible=false;active=v;v.visible=true;v.position.copy(q.p);
+      if(v){const fresh=active!==v||changed||!playing;if(active&&active!==v)active.visible=false;active=v;v.visible=true;v.position.copy(q.p);
         // heading from a point ahead on the route (not the next sample), eased so corners don't snap
         const du=L.world==='globe'?.01:Math.min(.5,(L.mode==='plane'?.6:.14)/(L.len||1));
-        const dir=u+du<=1?posOnLeg(L,u+du).p.sub(q.p):q.p.clone().sub(posOnLeg(L,Math.max(0,u-du)).p);
-        if(L.world==='nz'){if(L.mode==='heli')dir.y*=.35;else if(L.mode!=='plane')dir.y*=.8;}
-        if(L.world==='globe')ghost.up.copy(q.p).normalize();else ghost.up.set(0,1,0);
+        const dir=L.travel?q.d:u+du<=1?posOnLeg(L,u+du).p.sub(q.p):q.p.clone().sub(posOnLeg(L,Math.max(0,u-du)).p);
+        if(L.mode==='heli')dir.y*=.35;
+        if(L.travel&&!L.travel.boat)ghost.up.copy(SurfaceTravel.wheelContact(L.travel,q,fleet.vehicles[L.mode],fleet.mapUnitsPerMetre));
+        else if(L.world==='globe')ghost.up.copy(q.p).normalize();else ghost.up.set(0,1,0);
         if(dir.lengthSq()>1e-12){ghost.position.copy(q.p);tmp.copy(q.p).sub(dir);ghost.lookAt(tmp);
-          if(fresh)v.quaternion.copy(ghost.quaternion);else v.quaternion.slerp(ghost.quaternion,1-Math.exp(-dt*7*Math.max(1,speed)));}
+          if(fresh)v.quaternion.copy(ghost.quaternion);else v.quaternion.slerp(ghost.quaternion,1-Math.exp(-dt*(L.travel?18:7)*Math.max(1,speed)));}
         const rotor=v.userData.rotor,tail=v.userData.tail;if(rotor)rotor.rotation.y+=dt*40;if(tail)tail.rotation.x+=dt*50;
-        if(v.userData.wheels&&playing)v.userData.wheels.forEach(w=>w.rotation.x-=dt*speed*14);}
+        if(L.mode==='car')for(const wheel of v.userData.wheels)wheel.rotation.x=-q.s/(fleet.mapUnitsPerMetre*.38);
+        }
     }
     night+=((L.night||0)-night)*(1-Math.exp(-dt*1.5));
-    if(follow){if(L.world==='globe')followGlobe(L,target,u,dt);else followNZ(L,target,dt);}
+    if(follow){if(L.world==='globe')followGlobe(L,target,u,dt);else followNZ(L,target,dt,velocity);}
     $('scrub').value=Math.round(1000*t/TOTAL);
   }
   if(chapterTimer>0){chapterTimer-=dt;if(chapterTimer<=0)$('chapter').classList.remove('show');}
@@ -499,7 +517,15 @@ function frame(){
   if(world==='nz'){const c=controls.target;sun.target.position.copy(c);sun.position.set(c.x-14,c.y+22,c.z+9);
     const r=Math.min(30,Math.max(4,camera.position.distanceTo(c)*.9));Object.assign(sun.shadow.camera,{left:-r,right:r,top:r,bottom:-r});sun.shadow.camera.updateProjectionMatrix();
     seaNormals.offset.x+=dt*.006;seaNormals.offset.y+=dt*.0035;skyU.night.value=night;}
-  controls.update();renderer.render(world==='globe'?gScene:scene,camera);
+  if(world==='nz')for(const group of scenery)group.userData.update(camera.position);
+  const near=Math.max(.00035,Math.min(.12,camera.position.distanceTo(controls.target)*.014));
+  if(Math.abs(near-camera.near)>near*.06){camera.near=near;camera.updateProjectionMatrix();}
+  controls.update();
+  const road=started&&follow&&legs[curLeg]?.travel;
+  if(road&&!road.boat){
+    const minY=SurfaceTravel.cameraFloor(terrainSurface,controls.target,camera.position,.0015);
+    if(camera.position.y<minY){camera.position.y=minY;camera.lookAt(controls.target);}
+  }renderer.render(world==='globe'?gScene:scene,camera);
   const w=canvas.clientWidth,h=canvas.clientHeight,camDir=camera.position.clone().normalize();
   labelEls.forEach(l=>{let vis=l.world===world;
     if(vis){tmp.copy(l.v).project(camera);vis=tmp.z<1&&Math.abs(tmp.x)<1.1&&Math.abs(tmp.y)<1.1;
@@ -514,11 +540,21 @@ addEventListener('resize',resize);
 // ---------- boot ----------
 (async function(){
   resize();world='nz';setWorld('globe');overview();requestAnimationFrame(frame);
-  const names=['terrain_south_island','car','coach','helicopter','boat','plane','church_stone','observatory','lone_tree','hot_tub','mosque','city','glowworm_cave','ski_lift','glacier_ice','pine_tree','beech_tree','sheep','pin'];
-  const [routes,...scenes]=await Promise.all([fetch('web_assets/routes.json').then(r=>r.json()).catch(()=>null)].concat(names.map(load)));
-  ROUTES=routes?routes.routes:{};
+  const names=['terrain_south_island','car','coach','helicopter','boat','plane','church_stone','observatory','lone_tree','hot_tub','mosque','city','glowworm_cave','ski_lift','glacier_ice','pine_tree','beech_tree','sheep','pin','hooker_valley'];
+  const detailed=new Set(['hooker_valley','car','coach','boat','helicopter','plane','church_stone','observatory','lone_tree','hot_tub','mosque','city','glowworm_cave','ski_lift','glacier_ice','pine_tree','beech_tree','sheep']),wildlife=['beech_tree','pine_tree','sheep'];
+  const canonical=(location.pathname.includes('/claude-cut/')?'../3d/web_assets/':'../map3d/web_assets/');
+  const [routes,cruises,dimensions,scenes,distant]=await Promise.all([
+    fetch('web_assets/routes.json').then(r=>r.json()).catch(()=>null),
+    fetch('../atlas/cruises.json').then(r=>r.json()).catch(()=>null),
+    fetch('../atlas/vehicle-dimensions.json').then(r=>r.json()),
+    Promise.all(names.map(n=>load(n,detailed.has(n)?canonical:'web_assets/'))),
+    Promise.all(wildlife.map(n=>load(n,'../atlas/distant/')))
+  ]);
+  fleet=dimensions;
+  for(const [mode,spec] of Object.entries(fleet.vehicles))MODE[mode].len=spec.length*fleet.mapUnitsPerMetre;
+  ROUTES=routes?.routes||{};CRUISES=cruises||{};
   const A={};scenes.forEach((s,i)=>A[names[i]]=s);
-  if(A.terrain_south_island){const ter=A.terrain_south_island;scene.add(ter);
+  if(A.terrain_south_island){const ter=A.terrain_south_island;finishLandscape(ter);scene.add(ter);
     ter.traverse(o=>{if(o.isMesh){o.receiveShadow=true;o.castShadow=!/lake/i.test(o.name);}});
     ter.traverse(o=>{if(!o.isMesh)return;const lake=/lake/i.test(o.name)||/lake/i.test(o.parent&&o.parent.name||'');raster(o,lake?water:land);});}
   // topographic contour lines every 200 m (Claude cut)
@@ -534,12 +570,15 @@ addEventListener('resize',resize);
     scene.add(new THREE.LineSegments(cg,new THREE.LineBasicMaterial({color:'#4a3b2a',transparent:true,opacity:.22})));}
   buildTimeline();
   [['car','car'],['coach','coach'],['helicopter','heli'],['boat','boat'],['plane','plane']].forEach(([f,m])=>{
-    const v=fit(A[f],MODE[m].len,MODE[m].c);v.visible=false;scene.add(v);vehicles[m]=v;
-    v.userData.wheels=[];v.traverse(o=>{if(o.name==='Rotor')v.userData.rotor=o;if(o.name==='TailRotor')v.userData.tail=o;if(/^Wheel_/.test(o.name))v.userData.wheels.push(o);if(o.isMesh)o.castShadow=true;});});
-  gPlane=fit(A.plane?A.plane.clone(true):null,.55,'#fff');gPlane.visible=false;gScene.add(gPlane);
+    const v=makeVehicle(A[f],fleet,m);v.visible=false;scene.add(v);vehicles[m]=v;
+    v.userData.wheels=[];v.traverse(o=>{if(o.name==='Rotor')v.userData.rotor=o;if(o.name==='TailRotor')v.userData.tail=o;if(/^Wheel_(LF|RF|LR|RR)$/.test(o.name))v.userData.wheels.push(o);if(o.isMesh)o.castShadow=true;});});
+  gPlane=makeVehicle(A.plane,fleet,'plane');
+  const marker=new THREE.Mesh(new THREE.RingGeometry(.044,.055,40),new THREE.MeshBasicMaterial({color:'#fff2cf',side:THREE.DoubleSide,depthWrite:false}));
+  gPlane.add(marker);gPlane.visible=false;gScene.add(gPlane);
   const place=(name,ll,size,col)=>{const p=P(ll[0],ll[1]);const o=fit(A[name],size,col);o.position.set(p.x,H(p.x,p.z),p.z);o.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true;}});scene.add(o);};
+  place('hooker_valley',[-43.72,170.10],.72,'#8b9b83');
   place('city',[-43.532,172.636],.7,'#ccc');place('mosque',[-43.545,172.56],.26,'#eee');place('church_stone',[-44.015,170.50],.22,'#a98');
-  place('observatory',[-43.975,170.455],.22,'#ddd');place('lone_tree',[-44.693,169.115],.2,'#7a6');place('glowworm_cave',[-45.285,167.645],.26,'#556');
+  place('observatory',[-43.975,170.455],.22,'#ddd');place('lone_tree',[-44.693,169.115],.2,'#7a6');place('glowworm_cave',[-45.29495,167.7269],.26,'#556');
   place('hot_tub',[-44.985,168.66],.2,'#a86');place('ski_lift',[-44.92,168.745],.4,'#ddd');place('glacier_ice',[-43.505,170.30],.6,'#cdeffa');
   STOPS.slice(0,7).forEach(s=>{const p=P(s[1][0],s[1][1]);const o=fit(A.pin,.3,'#c8432f');o.position.set(p.x+.25,H(p.x+.25,p.z-.2)+.05,p.z-.2);scene.add(o);});
   if(A.terrain_south_island){
@@ -552,12 +591,15 @@ addEventListener('resize',resize);
       else if(!west&&h>.08&&h<.7&&pine.length<160&&Rn()<.5){s.setScalar(.7+Rn()*.5);pine.push(m.compose(new THREE.Vector3(x,h,z),q,s).clone());}
       else if(!west&&h<.3&&sheep.length<220){s.setScalar(1);sheep.push(m.compose(new THREE.Vector3(x,h,z),q,s).clone());}
     }
-    if(beech.length)scene.add(instance(fit(A.beech_tree,.22,'#3f6b3a'),beech));
-    if(pine.length)scene.add(instance(fit(A.pine_tree,.26,'#2f5a3a'),pine));
-    if(sheep.length)scene.add(instance(fit(A.sheep,.07,'#f2f2f2'),sheep));
+    placeRoadsideHabitats(legs,beech,pine,sheep,terrainSurface,W,westOfDivide,Rn);
+    for(const [i,name] of wildlife.entries()){
+      const stems=[beech,pine,sheep][i],size=[14,18,1.4][i]*fleet.mapUnitsPerMetre,color=['#3f6b3a','#2f5a3a','#f2f2f2'][i];
+      const group=makeScenery(fit(A[name],size,color),fit(distant[i],size,color),stems);
+      scene.add(group);scenery.push(group);
+    }
   }
   $('status').hidden=true;
-  if(!routes){$('status').hidden=false;$('status').textContent='Road routes failed to load. Drives are missing.';}
+  if(!routes||!cruises){$('status').hidden=false;$('status').textContent='Some routes could not load. Reload to try again.';}
   showDay(0);
   // deep links from the summary page: #day-0 … #day-14
   const fromHash=()=>{const m=/^#day-(\d{1,2})$/.exec(location.hash);if(m&&+m[1]<=14){jumpDay(+m[1]);showDay(+m[1]);}};

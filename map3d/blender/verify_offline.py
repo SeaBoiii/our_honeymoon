@@ -110,17 +110,20 @@ def main():
         ring = scope['clean_ring'](record['ring'])
         n = len(ring)
         assert len(set(ring)) == n, record['name']+' has duplicated vertices'
-        for i in range(n):
-            for j in range(i+2, n):
-                if i == 0 and j == n-1:
-                    continue
-                assert not crossing(ring[i], ring[(i+1) % n], ring[j], ring[(j+1) % n]), record['name']+' self-intersects'
+        # Sweep edge bounds along X before applying the exact intersection test.
+        active=[]
+        for left,right,i in sorted((min(ring[i][0],ring[(i+1)%n][0]),max(ring[i][0],ring[(i+1)%n][0]),i) for i in range(n)):
+            active=[pair for pair in active if pair[0]>=left]
+            for _,j in active:
+                if (i-j)%n in (0,1,n-1):continue
+                assert not crossing(ring[i],ring[(i+1)%n],ring[j],ring[(j+1)%n]), record['name']+' self-intersects'
+            active.append((right,i))
         if record in data['land']:
             coasts[record['name']] = ring
         else:
             pts = np.asarray(ring)
             assert inside(pts[:, 0], pts[:, 1], coasts['SouthIsland']).all(), record['name']+' leaves the land ring'
-    for lon, lat in [(167.85, -44.60), (167.90, -44.64), (167.934, -44.666)]:
+    for lon, lat in [(167.90,-44.646),(167.875,-44.626),(167.923913,-44.668436)]:
         x, y = scope['project'](lon, lat)
         assert not bool(inside(x, y, coasts['SouthIsland'])), 'Milford inlet blocked'
     print('PASS: all geographic rings simple, lakes inside land, Milford inlet open')
@@ -147,7 +150,7 @@ def main():
     point_count = 0
     for name, ring in coasts.items():
         main_island, hint = name == 'SouthIsland', name == 'NorthIslandHint'
-        step = .15 if main_island else (.65 if hint else .23)
+        step = .096 if main_island else (.65 if hint else .23)
         lo, hi = np.min(ring, axis=0), np.max(ring, axis=0)
         xx, yy = np.meshgrid(np.arange(lo[0]+step*.47, hi[0], step), np.arange(lo[1]+step*.41, hi[1], step))
         xy = np.column_stack((xx.ravel(), yy.ravel()))
@@ -183,7 +186,7 @@ def main():
         lo, hi = np.min(ring, axis=0), np.max(ring, axis=0)
         xx, yy = np.meshgrid(np.arange(lo[0]+.15*.47, hi[0], .15), np.arange(lo[1]+.15*.41, hi[1], .15))
         estimated += 2*int(inside(xx.ravel(), yy.ravel(), ring).sum())+len(ring)-2
-    assert 120000 <= estimated <= 250000, 'Grid density estimate misses budget'
+    assert 300000 <= estimated <= 500000, 'Grid density estimate misses budget'
     print('[terrain] Estimated total triangles: %d (actual CDT count requires Blender)' % estimated)
     print('[roads] Max road-corridor adjustment: %.1f m / Z %.5f (lowering only)' % (max_adjustment, max_adjustment*HEIGHT_SCALE))
     print('[dry run] %d candidate terrain vertices; %.2f s including both road-elevation modes and checks' % (point_count, perf_counter()-started))

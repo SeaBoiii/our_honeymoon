@@ -2,159 +2,159 @@
   {
     "file": "terrain_south_island.glb",
     "root": "Terrain",
-    "triangles": 133128,
+    "triangles": 386523,
     "bbox_min": [
-      -32.280247,
-      -36.501827,
-      0.025
+      -32.623398,
+      -36.489582,
+      0.0
     ],
     "bbox_max": [
-      45.044998,
-      38.950867,
-      2.9792
+      47.971123,
+      38.984142,
+      1.453745
     ],
-    "notes": "Procedural elevation; hand-digitised geographic rings; separate water surfaces."
+    "notes": "LINZ DEM at 5x, Topo50 mainland coast and lake margins aligned to road shoulders, eight lake surfaces and height-blended winter vegetation."
   },
   {
     "file": "car.glb",
     "root": "Car",
-    "triangles": 600,
+    "triangles": 27508,
     "bbox_min": [
-      -1.086817,
-      -2.25,
-      -0.0
+      -1.07,
+      -2.41,
+      0.0
     ],
     "bbox_max": [
-      1.086817,
-      2.25,
-      2.032723
+      1.07,
+      2.41,
+      1.7
     ],
-    "notes": "Compact SUV, ski rack; +Y forward."
+    "notes": "Silver touring SUV with shaped wheel arches, individual alloy wheels and roof rails; +Y forward."
   },
   {
     "file": "coach.glb",
     "root": "Coach",
-    "triangles": 872,
+    "triangles": 2816,
     "bbox_min": [
-      -0.632193,
-      -2.25,
-      -0.0
+      -1.45,
+      -6.299999,
+      0.0
     ],
     "bbox_max": [
-      0.632193,
-      2.25,
-      1.392285
+      1.45,
+      6.300001,
+      3.55
     ],
     "notes": "Generic white touring coach; +Y forward."
   },
   {
     "file": "helicopter.glb",
     "root": "Helicopter",
-    "triangles": 728,
+    "triangles": 2500,
     "bbox_min": [
-      -1.838521,
-      -2.25,
+      -5.35,
+      -6.45,
       0.0
     ],
     "bbox_max": [
-      1.838521,
-      2.25,
-      1.742218
+      5.35,
+      6.45,
+      3.45
     ],
     "notes": "Rotor local Z; TailRotor local X; +Y forward."
   },
   {
     "file": "boat.glb",
     "root": "Boat",
-    "triangles": 680,
+    "triangles": 4392,
     "bbox_min": [
-      -0.906716,
-      -2.25,
+      -4.3,
+      -12.0,
       0.0
     ],
     "bbox_max": [
-      0.906716,
-      2.25,
-      2.384328
+      4.3,
+      12.000002,
+      8.3
     ],
     "notes": "Two-deck fiord cruise boat; +Y forward."
   },
   {
     "file": "plane.glb",
     "root": "Plane",
-    "triangles": 892,
+    "triangles": 1724,
     "bbox_min": [
-      -2.053691,
-      -2.25,
+      -29.999996,
+      -32.0,
       0.0
     ],
     "bbox_max": [
-      2.053691,
-      2.25,
-      1.409396
+      30.0,
+      32.0,
+      17.0
     ],
     "notes": "Generic twin-jet wide-body; +Y forward."
   },
   {
     "file": "church_stone.glb",
     "root": "StoneChurch",
-    "triangles": 232,
+    "triangles": 7904,
     "bbox_min": [
-      -0.34,
-      -0.481,
+      -0.314378,
+      -0.5,
       0.0
     ],
     "bbox_max": [
-      0.34,
-      0.481,
-      1.0
+      0.314378,
+      0.5,
+      0.924642
     ],
     "notes": "Stone lakeside chapel and bell tower."
   },
   {
     "file": "observatory.glb",
     "root": "Observatory",
-    "triangles": 434,
+    "triangles": 8526,
     "bbox_min": [
-      -0.5,
+      -0.491266,
       -0.5,
       0.0
     ],
     "bbox_max": [
+      0.491266,
       0.5,
-      0.5,
-      0.858778
+      0.843777
     ],
-    "notes": "Telescope dome and slit."
+    "notes": "Shutter rails, segmented dome, walkway, access stairs and handrails."
   },
   {
     "file": "lone_tree.glb",
     "root": "LoneTree",
-    "triangles": 802,
+    "triangles": 10984,
     "bbox_min": [
-      -0.436019,
-      -0.417062,
-      0.0
+      -0.5,
+      -0.49644,
+      -0.0
     ],
     "bbox_max": [
-      0.436019,
-      0.417062,
-      1.0
+      0.5,
+      0.49644,
+      0.843419
     ],
-    "notes": "Willow in shallow water."
+    "notes": "Bent willow trunk, hanging shoots, lanceolate leaves and a shingle shoal."
   },
   {
     "file": "hot_tub.glb",
     "root": "HotTub",
-    "triangles": 772,
+    "triangles": 3340,
     "bbox_min": [
       -0.5,
-      -0.409091,
+      -0.410227,
       0.0
     ],
     "bbox_max": [
       0.5,
-      0.409091,
+      0.410227,
       0.702273
     ],
     "notes": "Cedar tub for two on a cliff deck."
@@ -162,23 +162,23 @@
   {
     "file": "mosque.glb",
     "root": "Mosque",
-    "triangles": 530,
+    "triangles": 8022,
     "bbox_min": [
-      -0.445545,
+      -0.455941,
       -0.371287,
       0.0
     ],
     "bbox_max": [
-      0.445545,
+      0.455941,
       0.371287,
       1.0
     ],
-    "notes": "Generic dome and one minaret."
+    "notes": "Prayer hall with arched glazing, stonework, dome and a balustraded minaret."
   },
   {
     "file": "city.glb",
     "root": "City",
-    "triangles": 1212,
+    "triangles": 7132,
     "bbox_min": [
       -0.5,
       -0.5,
@@ -187,30 +187,30 @@
     "bbox_max": [
       0.5,
       0.5,
-      0.5175
+      0.568
     ],
     "notes": "Twelve buildings and street."
   },
   {
     "file": "glowworm_cave.glb",
     "root": "Cave",
-    "triangles": 620,
+    "triangles": 21604,
     "bbox_min": [
       -0.5,
-      -0.486692,
+      -0.493621,
       0.0
     ],
     "bbox_max": [
       0.5,
-      0.486692,
-      0.71667
+      0.493621,
+      0.593238
     ],
     "notes": "Cave arch, small boat, emissive glow points."
   },
   {
     "file": "ski_lift.glb",
     "root": "SkiLift",
-    "triangles": 356,
+    "triangles": 4028,
     "bbox_min": [
       -0.5,
       -0.316667,
@@ -219,38 +219,38 @@
     "bbox_max": [
       0.5,
       0.316667,
-      0.700437
+      0.699033
     ],
     "notes": "Three towers, cable and hanging chairs."
   },
   {
     "file": "glacier_ice.glb",
     "root": "GlacierIce",
-    "triangles": 640,
+    "triangles": 16060,
     "bbox_min": [
-      -0.421841,
+      -0.472879,
       -0.5,
-      0.0
+      -0.0
     ],
     "bbox_max": [
-      0.421841,
+      0.472879,
       0.5,
-      0.449761
+      0.536732
     ],
     "notes": "Faceted ice tongue and open crevasses."
   },
   {
     "file": "pine_tree.glb",
     "root": "PineTree",
-    "triangles": 108,
+    "triangles": 8044,
     "bbox_min": [
-      -0.344086,
-      -0.344086,
+      -0.29199,
+      -0.279745,
       0.0
     ],
     "bbox_max": [
-      0.344086,
-      0.344086,
+      0.29199,
+      0.279745,
       1.0
     ],
     "notes": "Conifer."
@@ -258,49 +258,65 @@
   {
     "file": "beech_tree.glb",
     "root": "BeechTree",
-    "triangles": 394,
+    "triangles": 7384,
     "bbox_min": [
-      -0.414474,
-      -0.378927,
-      0.0
+      -0.316259,
+      -0.290032,
+      0.031122
     ],
     "bbox_max": [
-      0.414474,
-      0.378927,
-      1.0
+      0.294989,
+      0.290033,
+      0.82759
     ],
     "notes": "Rounded native tree."
   },
   {
     "file": "sheep.glb",
     "root": "Sheep",
-    "triangles": 296,
+    "triangles": 14236,
     "bbox_min": [
-      -0.27173,
-      -0.5,
-      0.0
+      -0.226284,
+      -0.455234,
+      0.048421
     ],
     "bbox_max": [
-      0.27173,
-      0.5,
-      0.703704
+      0.210516,
+      0.435816,
+      0.695544
     ],
     "notes": "Wool body, dark head and four legs."
   },
   {
     "file": "pin.glb",
     "root": "Pin",
-    "triangles": 384,
+    "triangles": 704,
     "bbox_min": [
-      -0.349245,
+      -0.349996,
       -0.065,
       0.0
     ],
     "bbox_max": [
-      0.349245,
+      0.349996,
       0.065,
       1.0
     ],
     "notes": "Accent-red map pin with an actual heart-shaped aperture."
+  },
+  {
+    "file": "hooker_valley.glb",
+    "root": "HookerValley",
+    "triangles": 27415,
+    "bbox_min": [
+      -0.5,
+      -0.341761,
+      0.0
+    ],
+    "bbox_max": [
+      0.5,
+      0.341761,
+      0.437853
+    ],
+    "notes": "Alpine valley miniature with a braided river and a suspended timber footbridge."
   }
 ]
