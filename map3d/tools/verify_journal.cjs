@@ -21,13 +21,13 @@ async function checkLayout(page, width) {
       (t) => t.scrollWidth <= t.clientWidth + 1,
     ),
     brokenAnchors: [...document.querySelectorAll('a[href^="#"]')]
-      .filter((a) => !document.getElementById(a.hash.slice(1)))
-      .map((a) => a.hash),
+      .map((a) => a.getAttribute("href"))
+      .filter((hash) => !document.getElementById(hash.slice(1))),
   }));
   assert.equal(layout.days, 15);
   assert.equal(layout.choices, layout.days);
   const scenes = page.locator(".chapter-head img");
-  assert.equal(await scenes.count(), 3);
+  assert.equal(await scenes.count(), 5);
   for (const image of await scenes.all()) {
     await image.scrollIntoViewIfNeeded();
     await page.waitForFunction(
@@ -93,6 +93,8 @@ async function checkReturn(page, edition, day, query = "") {
   );
   const otherMode = await page.locator("#tour-switch").getAttribute("href");
   assert.equal(new URL(otherMode).hash, "#day-" + day);
+  const more=page.locator('#options-toggle');
+  if(await more.isVisible()) await more.click();
   await back.click();
   await page.waitForFunction(
     (d) =>

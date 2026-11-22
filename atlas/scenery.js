@@ -77,7 +77,11 @@ function roadsideLandscape(pack, sheep, terrain, water, legs, west, airport, set
       const h=terrain.height(x,z);
       const margin=name==='Sheep'?.001:name==='Beech'?size*.44:Math.hypot(size,width)*.48;
       if(h===null||water(x,z)||h<-.001||nearAirport(x,z,margin))return;
-      if(landmarks.some(({bounds})=>x>=bounds.min.x-margin&&x<=bounds.max.x+margin&&z>=bounds.min.z-margin&&z<=bounds.max.z+margin))return;
+      if(landmarks.some(site=>{
+        const extra=site.name==='church_stone' && (name.startsWith('Villa')||name==='Woolshed'||name==='Beech') ? site.extent*2.4 : 0;
+        const radius=margin+extra,b=site.bounds;
+        return x>=b.min.x-radius && x<=b.max.x+radius && z>=b.min.z-radius && z<=b.max.z+radius;
+      }))return;
       const network=roads.get(key(Math.floor(x/cell),Math.floor(z/cell)))||[];
       if(network.some(s=>distanceToSegment(x,z,...s)<.0015+margin))return;
       const dx=(terrain.height(x+.003,z)??h)-h,dz=(terrain.height(x,z+.003)??h)-h;

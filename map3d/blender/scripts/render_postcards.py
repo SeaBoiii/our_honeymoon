@@ -1,12 +1,14 @@
-"""Render the three illustrated itinerary chapters in a fresh background Blender process.
+"""Render the illustrated itinerary chapters in a fresh background Blender process.
 
 blender -b --factory-startup --python-exit-code 1 -P map3d/blender/scripts/render_postcards.py
 """
 from pathlib import Path
 from math import cos, sin, pi, hypot
 from random import Random
+import sys
 
 import bpy
+import bmesh
 from mathutils import Vector, noise
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -54,6 +56,8 @@ PEAKS = {
     'tekapo': [(-3.2,1.45,1.35),(-1.85,2,1.89),(-1.2,2.35,1.45),(.25,2.05,1.34),(1.8,2,1.16),(3.2,1.65,.88)],
     'milford': [(-3.2,.95,1.85),(-2.05,1.25,3.04),(-1.6,1.55,2.25),(-.65,2.43,1.48),(1.1,2.1,1.53),(3.25,1.12,2.18),(4.0,.3,1.47)],
     'franz': [(-3.3,.9,1.4),(-2.3,1.5,2.18),(-1.25,2.05,2.55),(.3,2.15,1.8),(1.65,2.0,2.37),(3.1,1.05,2.06),(3.7,.0,1.03)],
+    'wanaka': [(-3.7,1.1,.94),(-2.7,1.57,1.54),(-1.95,1.9,1.36),(-.48,2.03,1.25),(.8,2.12,1.73),(2.2,1.81,1.48),(3.48,1.45,1.12)],
+    'onsen': [(-3.5,1.1,1.45),(-2.6,1.78,1.88),(-1.65,1.95,1.35),(.2,2.12,1.52),(1.65,1.93,1.71),(3.05,1.55,1.4)],
 }
 
 
@@ -62,6 +66,12 @@ def elevation(place, x, y):
     peaks = max(h - hypot((x-a)*.91,(y-b)*1.36)*(1.35 if place=='milford' else 1.18)
                 for a,b,h in PEAKS[place])
     mountains = peaks + .25*relief + .095*sin(x*8+y*3)
+    if place == 'wanaka':
+        return max(mountains, -.18, (-2.39-y)*.67+.06*relief)
+    if place == 'onsen':
+        river=abs(x-(.65+.64*sin(y*1.27)))-.42
+        ledge=.97 if x<0 else .73
+        return max(mountains, min(ledge,river*.92)-.08+.07*relief)
     if place == 'tekapo':
         shore = -.99+.24*x+.29*cos(x*1.5)
         return max(mountains, min(.28, (shore-y)*1.8)+.035*relief)
@@ -90,7 +100,8 @@ def ground(place, mats):
         elif z > (1.62 if place=='milford' else 1.05)+.16*sin(x*4+y*3)+.18*abs(cos(x*3-y)): color='snow'
         elif z > (.65 if place=='tekapo' else 1.1): color='granite' if z>1.25 else 'stone'
         elif place=='tekapo': color='grass' if sin(x*2.6+y*1.7)>.15 else 'meadow'
-        elif place=='milford': color='green' if z>.7 else 'forest'
+        elif place in ('milford','onsen'): color='green' if z>.7 else 'forest'
+        elif place=='wanaka': color='beach' if y<-.9 else 'granite'
         else: color='stone' if y>-.9 or abs(x)<1.45 else 'forest'
         faces.append(tri); colors.append(color)
     for j in range(segments):
@@ -154,6 +165,7 @@ def planting(place, rng, mats):
                 ang=rng.random()*TAU; h=rng.uniform(.055,.14)
                 triangle((x-.014,y,z-.012),(x+.017,y,z-.012),(x+cos(ang)*h*.55,y+sin(ang)*h*.55,z+h),'reed')
         elif z<1.08 and (place=='milford' or abs(x) > 2.4):
+            if place=='onsen' and hypot(x+1.85,y+.95)<1.73: continue
             size=rng.uniform(.055,.14)
             for offset in (-.32,.28):
                 cx,cy=x+size*offset,y+size*offset
@@ -169,8 +181,34 @@ def planting(place, rng, mats):
     mesh('Shore planting and reflections',verts,faces,colors,mats)
 
 
+def steam(x, y, z):
+    """Taper two translucent wisps above the warm water."""
+    mat=bpy.data.materials.new('Steam in the evening light')
+    mat.use_nodes=True
+    nodes=mat.node_tree.nodes
+    shader=next(n for n in nodes if n.type=='BSDF_PRINCIPLED')
+    shader.inputs['Base Color'].default_value=(1,.89,.78,1)
+    shader.inputs['Alpha'].default_value=.18
+    for j in range(2):
+        curve=bpy.data.curves.new('Steam wisp','CURVE');curve.dimensions='3D'
+        curve.bevel_depth=.036;curve.bevel_resolution=4;curve.resolution_u=12
+        line=curve.splines.new('BEZIER');line.bezier_points.add(7)
+        for i,pt in enumerate(line.bezier_points):
+            t=i/7
+            pt.co=(x+.31*j+.14*sin(t*7+j)+.18*t,y+.14*j+.08*cos(t*5),z+t*(.7+.2*j))
+            pt.handle_left_type=pt.handle_right_type='AUTO'
+            pt.radius=.08+.9*sin(pi*t)
+        obj=bpy.data.objects.new('Steam',curve);bpy.context.scene.collection.objects.link(obj)
+        curve.materials.append(mat)
+
+
 def render(place, scene):
-    mats={k:material(k,v) for k,v in PALETTE.items()}
+    evening=place in ('onsen','wanaka')
+    palette=dict(PALETTE)
+    if evening:
+        palette.update(lake='#718b9b' if place=='wanaka' else '#48969a',snow='#efccd0',
+                       granite='#887b90',stone='#786d78',foam='#d1bac0',forest='#455b54')
+    mats={k:material(k,v) for k,v in palette.items()}
     rng=Random(197)
     ground(place,mats)
     planting(place,rng,mats)
@@ -186,6 +224,13 @@ def render(place, scene):
                 falls.append((x+edge,y,max(.025,elevation(place,x+edge,y))+.025))
         faces=[(j,j+1,j+3,j+2) for j in range(0,len(falls)-2,2)]
         mesh('Fiord waterfall',falls,faces,['foam']*len(faces),mats)
+    elif place=='wanaka':
+        # Submerge the standalone miniature's display base in the lake.
+        model('lone_tree',2.53,(-.65,-.99),-.29,-.70)
+    elif place=='onsen':
+        xy=(-1.85,-.95); height=elevation(place,*xy)
+        model('hot_tub',2.35,xy,height-.52,-.48)
+        steam(xy[0]-.21,xy[1],height+.91)
     else:
         model('glacier_ice',3.7,(-.38,-.25),-.11,-.29)
         model('helicopter',1.0,(1.45,-.80),1.93,-.82)
@@ -195,7 +240,9 @@ def render(place, scene):
     cam.rotation_euler=(target-cam.location).to_track_quat('-Z','Y').to_euler()
     cam.data.type='ORTHO';cam.data.ortho_scale=9.85
     scene.camera=cam
-    for pos,energy,size,color in [((-4,-5,8),1950,6,(1,.91,.79)),((4,1,6),840,5,(.79,.9,1))]:
+    lighting=[((-4,-5,8),1950,6,(1,.91,.79)),((4,1,6),840,5,(.79,.9,1))]
+    if evening: lighting=[((-6,1.5,3.6),1950,4,(1,.58,.34)),((3,-4,5),800,6,(.66,.72,1))]
+    for pos,energy,size,color in lighting:
         bpy.ops.object.light_add(type='AREA',location=pos)
         lamp=bpy.context.object;lamp.data.energy=energy;lamp.data.shape='DISK';lamp.data.size=size
         lamp.data.color=color;lamp.rotation_euler=(-lamp.location).to_track_quat('-Z','Y').to_euler()
@@ -209,12 +256,29 @@ def render(place, scene):
     scene.render.image_settings.file_format='WEBP';scene.render.image_settings.color_mode='RGBA';scene.render.image_settings.quality=91
     scene.render.filepath=str(ART/(place+'-scene.webp'))
     bpy.ops.render.render(write_still=True)
+    if evening:
+        # Share the same scenery with the interactive evening stops. Weld the
+        # foliage triangles before simplifying the two landscape meshes for WebGL.
+        for obj in list(scene.objects):
+            if obj.type=='CURVE':
+                bpy.context.view_layer.objects.active=obj
+                bpy.ops.object.select_all(action='DESELECT');obj.select_set(True)
+                bpy.ops.object.convert(target='MESH')
+            if obj.name not in ('Sculpted shoreline and ridges','Shore planting and reflections'):continue
+            bm=bmesh.new();bm.from_mesh(obj.data)
+            bmesh.ops.remove_doubles(bm,verts=list(bm.verts),dist=.00005)
+            bm.to_mesh(obj.data);bm.free()
+            mod=obj.modifiers.new('Web detail','DECIMATE');mod.ratio=.35
+        bpy.ops.export_scene.gltf(filepath=str(ART/(place+'-evening.glb')),export_format='GLB',
+            export_apply=True,export_cameras=False,export_lights=False,export_animations=False,
+            export_texcoords=False,export_yup=True)
 
 
 # This script runs in its own factory-startup background process.
 if __name__=='__main__':
     if not bpy.app.background:
         raise RuntimeError('Render the postcards with Blender in background mode.')
-    for place in PEAKS:
+    places=sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else PEAKS
+    for place in places:
         bpy.ops.wm.read_factory_settings(use_empty=True)
         render(place,bpy.context.scene)

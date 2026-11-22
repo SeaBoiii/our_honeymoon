@@ -1085,3 +1085,18 @@ body > footer {
     display: block;
   }
 }
+
+.activity-link {color:var(--lake); text-decoration:underline; text-decoration-color:color-mix(in srgb,var(--lake) 50%,transparent); text-underline-offset:.19em;}
+.activity-link:hover,.activity-link:focus-visible {text-decoration-color:currentColor;}
+.scene-art {display:block; border-radius:6px;}
+.chapter.wanaka .chapter-head {background:linear-gradient(115deg,#f6e8d9,#dec5ce 64%,#adb4cf);}
+.chapter.onsen .chapter-head {background:linear-gradient(115deg,#f6e8d4,#ecc7aa 62%,#c2b3c0);}
+.map-stop .hit {fill:transparent;pointer-events:all;}
+.map-stop:hover .stop,.map-stop:focus .stop {fill:#ffe5a5;stroke:#573a22;stroke-width:3px;}
+.map-stop:hover text,.map-stop:focus text {fill:#ffe5a5;text-decoration:underline;}
+.map-choices {grid-column:1/-1;}
+.map-choices:not(:has(.base-days:target)),.base-days {display:none;}
+.base-days:target {display:block;border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:18px;scroll-margin-top:12vh;}
+.base-days ul {list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:4px 24px;margin:6px 0;}
+.base-days li a,.base-close {display:inline-flex;align-items:center;min-height:44px;gap:8px;}
+.base-days li span,.base-close {font-size:.8rem;}
