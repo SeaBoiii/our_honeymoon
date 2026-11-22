@@ -120,7 +120,7 @@ body.rolling #rec i{opacity:1;animation:blink 1.2s steps(2) infinite}
 
   <aside id="side" class="glass" data-open="false">
     <header>
-      <div><span class="sub">24 Aug – 7 Sep 2027</span><h1>The South Island loop</h1><a class="itin" href="../">← Itinerary and stays</a> <a class="itin tour-switch" id="tour-switch" href="?tour=drive">Full driving tour</a></div>
+      <div><span class="sub">24 Aug – 7 Sep 2027</span><h1>The South Island loop</h1><a class="itin" id="journal-back" href="../#days">← Itinerary and stays</a> <a class="itin tour-switch" id="tour-switch" href="?tour=drive">Full driving tour</a></div>
       <button class="btn" id="toggle" aria-expanded="false" aria-controls="days">Days</button>
     </header>
     <label class="landmark-picker"><select id="places" aria-label="Explore a 3D landmark" disabled><option value="">Explore a landmark…</option></select></label>
@@ -378,6 +378,9 @@ const fullDrive=fullDriveRequested(),tourSwitch=$('tour-switch');
 $('app').classList.toggle('itinerary-tour',!fullDrive);
 tourSwitch.textContent=fullDrive?'Itinerary highlights':'Full driving tour';
 function linkOtherTour(day){
+  const journal=$('journal-back');
+  journal.hash=day>=0?'trip-day-'+day:'days';
+  journal.textContent=day>0?'← Day '+day+' itinerary':day===0?'← Departure itinerary':'← Written itinerary';
   const url=new URL(location.href);url.searchParams.set('tour',fullDrive?'itinerary':'drive');
   url.hash=day>=0?'day-'+day:'';tourSwitch.href=url.href;
 }

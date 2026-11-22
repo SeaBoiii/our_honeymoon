@@ -10,7 +10,9 @@ A 14-day self-drive honeymoon from Singapore to Aotearoa (24 Aug – 7 Sep 2027)
 | [3D vlog](https://seaboiii.github.io/our_honeymoon/3d/) | Day-by-day visits to the South Island landmarks, with short travel scenes. |
 | [3D vlog, Claude cut](https://seaboiii.github.io/our_honeymoon/claude-cut/) | The same trip with its own terrain treatment and the same detailed vehicles and landmarks, plus shadows, ripples on the sea and topographic contours |
 
-Deep links open a 3D page at a given day, e.g. `/3d/#day-6` for Milford Sound.
+The written journal opens at the day index. Lake Tekapo, Milford Sound and Franz Josef have landscape illustrations made with the same models as the map. The trip guide groups stays, booking notes, halal food, prayer and the saved checklist.
+
+Deep links open a 3D page at a given day, e.g. `/3d/#day-6` for Milford Sound. Both map editions link back to that written day at `/#trip-day-6`.
 The primary map opens a common-scale vehicle lineup at `#place-fleet`, the SUV at `#place-suv` and the merino at `#place-merino`. Ten landmarks are available in the same orbit viewer. Open `#leg-te-anau` to board the lake cruise or `#leg-onsen-glenorchy` to follow the lakeside drive.
 
 ## Repository layout
@@ -47,9 +49,11 @@ python -I map3d/tools/fill_dem_gaps.py
 node map3d/tools/verify_road_contact.cjs       # check pavement and vehicle contact against both terrain meshes
 node map3d/tools/verify_fleet.cjs              # check every exported vehicle against its metre dimensions
 python map3d/tools/build_atlas_art.py          # package the atlas plates (Pillow + NumPy)
+blender -b --factory-startup --python-exit-code 1 -P map3d/blender/scripts/render_postcards.py
 sh build_site.sh
 # With docs served locally and playwright-core on the Node module path:
 ATLAS_URL=http://127.0.0.1:8796 node map3d/tools/verify_playback.cjs
+ATLAS_URL=http://127.0.0.1:8796 node map3d/tools/verify_journal.cjs
 ```
 
 ## Data and credits
