@@ -33,6 +33,7 @@ wrap map3d-claude/index.html docs/claude-cut/index.html '../'
 cp map3d/web_assets/* docs/3d/web_assets/
 cp map3d-claude/web_assets/* docs/claude-cut/web_assets/
 cp -R atlas/. docs/atlas/
+cp -R budget docs/
 touch docs/.nojekyll
 # no artifact links may survive
 if grep -rl 'claude.ai/artifact' docs/*.html docs/*/index.html; then echo 'artifact link left in site' >&2; exit 1; fi

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Trip budget · Honeymoon Atlas</title>
+  <meta name="description" content="Plan the cost of two return flights and thirteen nights on New Zealand’s South Island.">
+  <link rel="icon" href="../atlas/valley.webp" type="image/webp">
+  <link rel="stylesheet" href="../atlas/type.css">
+  <link rel="stylesheet" href="../atlas/journal.css">
+  <link rel="stylesheet" href="budget.css">
+  <script src="budget.js" defer></script>
+</head>
+<body>
+<header class="mast">
+  <div class="wrap"><a class="brand" href="../"><span class="brand-mark" aria-hidden="true"></span>Honeymoon Atlas</a>
+    <nav aria-label="Trip navigation"><a href="../#days">Days</a><a href="../#route">Route &amp; map</a><a href="../#guide">Guide</a><a href="./" aria-current="page">Budget</a><a class="map-nav" href="../3d/">3D map</a></nav>
+  </div>
+</header>
+<main class="wrap ledger">
+  <header class="ledger-heading"><div><p class="chapter-date">24 Aug – 7 Sep 2027</p><h1>Honeymoon budget</h1><p>Two return flights and 13 nights on the South Island, for both of us.</p></div><img src="../atlas/valley.webp" alt="" width="1320" height="900"></header>
+  <section class="balance" aria-labelledby="balance-heading">
+    <div class="balance-heading"><h2 id="balance-heading">Where we stand</h2><span>Singapore dollars</span></div>
+    <div class="balance-metrics">
+      <div><span>Combined budget</span><strong id="cap-total">S$30,000</strong></div>
+      <div><span>Flights paid</span><strong id="flight-total">S$13,987.80</strong></div>
+      <div><span>Left after flights</span><strong id="cash-left">S$16,012.20</strong></div>
+    </div>
+    <p class="rate">The two Trip.com receipts from 24 October 2026 include taxes and discounts on both return tickets.</p>
+    <div class="adjustments" hidden>
+      <details id="settings"><summary>Edit budget figures</summary>
+        <form id="budget-form">
+          <label>Combined budget (S$)<input id="cap" type="number" min="0.01" max="99999999" step="0.01" required value="30000"></label>
+          <label>Flights paid for both (S$)<input id="paid" type="number" min="0" max="99999999" step="0.01" value="13987.80" required></label>
+          <label>Booked stays total (NZ$)<input id="lodging" type="number" min="0" max="99999999" step="0.01" placeholder="Use itinerary estimate"></label>
+          <p class="form-note">A stay total replaces the 13-night estimate in both forecasts. Edits are saved in this browser.</p>
+          <div class="form-actions"><button class="atlas-btn" type="submit">Update budget</button><button type="button" id="restore">Restore trip figures</button></div>
+        </form>
+      </details>
+    </div>
+  </section>
+  <section aria-labelledby="forecast-heading">
+    <h2 id="forecast-heading">Will it fit?</h2>
+    <p class="section-copy">The plan uses the shortlisted rooms, all eight paid experiences and a reserve. The higher-cost case allows for dearer rooms, a higher exchange rate and more spending each day.</p>
+    <div class="scenarios" aria-live="polite">
+      <article class="forecast" data-case="plan"><h3>Planned trip</h3><p class="verdict" data-verdict>S$3,564.04 left over</p><dl>
+        <div><dt>Remaining trip costs</dt><dd data-ground>S$12,448.16</dd></div>
+        <div><dt>All-in cost with flights</dt><dd data-total>S$26,435.96</dd></div></dl><p class="rate">NZ$1 = S$0.73 · includes S$1,000 reserve</p></article>
+      <article class="forecast" data-case="high" data-over="true"><h3>Higher-cost trip</h3><p class="verdict" data-verdict>S$1,470.28 over budget</p><dl>
+        <div><dt>Remaining trip costs</dt><dd data-ground>S$17,482.48</dd></div>
+        <div><dt>All-in cost with flights</dt><dd data-total>S$31,470.28</dd></div></dl><p class="rate">NZ$1 = S$0.78 · includes S$1,500 reserve</p></article>
+    </div>
+    <p id="lodging-target">If other costs reach the higher estimates, keeping the 13 nights at or below NZ$6,215 would keep the trip within budget.</p>
+    <noscript><p>Enable JavaScript to adjust the figures in this browser.</p></noscript>
+  </section>
+  <section aria-labelledby="breakdown-heading"><h2 id="breakdown-heading">What the trip costs</h2>
+    <p class="section-copy">Allowances are for two. Each row uses the currency you would pay in. Only New Zealand dollar costs are converted in the forecasts.</p>
+    <table class="cost-table"><thead><tr><th scope="col">Expense</th><th scope="col">Plan</th><th scope="col">Higher cost</th></tr></thead><tbody>
+      <tr data-cost="stays" data-unit="NZD"><th scope="row"><details><summary>Stays</summary><p>One shared room for 13 nights. The nightly shortlist totals NZ$4,990–7,350. The higher allowance covers refundable rooms and price changes. <a href="../#stays-h">See the nine stays</a>.</p></details></th><td><data value="6500">NZ$6,500</data></td><td><data value="8100">NZ$8,100</data></td></tr>
+      <tr data-cost="rental" data-unit="NZD"><th scope="row"><details><summary>Winter SUV rental</summary><p>13 rental days, including an allowance for excess reduction and chains. Airport pickup and return in Christchurch. <a href="https://budgetcarrental.co.nz/hire/suv-rental-christchurch">Rental reference</a>.</p></details></th><td><data value="1500">NZ$1,500</data></td><td><data value="2300">NZ$2,300</data></td></tr>
+      <tr data-cost="fuel" data-unit="NZD"><th scope="row"><details><summary>Petrol and parking</summary><p>About 2,200 km including detours. The plan allows roughly 200 litres at NZ$2.75 plus NZ$100 for parking.</p></details></th><td><data value="650">NZ$650</data></td><td><data value="950">NZ$950</data></td></tr>
+      <tr data-cost="food" data-unit="NZD"><th scope="row"><details><summary>Meals and groceries</summary><p>14 days for two at NZ$110 or NZ$165 a day, with several self-catered dinners.</p></details></th><td><data value="1540">NZ$1,540</data></td><td><data value="2310">NZ$2,310</data></td></tr>
+      <tr data-cost="activities" data-unit="NZD"><th scope="row"><details><summary>Eight paid experiences</summary><p>Includes both travellers and one shared Onsen pool. The higher estimate allows for ticket price changes. <a href="#activity-prices">See operator prices</a>.</p></details></th><td><data value="4168">NZ$4,168</data></td><td><data value="4750">NZ$4,750</data></td></tr>
+      <tr data-cost="gear" data-unit="NZD"><th scope="row"><details><summary>Mountain gear and transfers</summary><p>Ski bus, winter clothing hire and walking accessories. Ski equipment is covered by the lesson package.</p></details></th><td><data value="200">NZ$200</data></td><td><data value="360">NZ$360</data></td></tr>
+      <tr data-cost="entry" data-unit="NZD"><th scope="row"><details><summary>NZeTA and visitor levy</summary><p>Assumes both travellers need the NZeTA and pay the NZ$100 levy. App or website application for two. <a href="https://www.immigration.govt.nz/visas/new-zealand-electronic-travel-authority-nzeta/">Immigration New Zealand</a>.</p></details></th><td><data value="234">NZ$234</data></td><td><data value="246">NZ$246</data></td></tr>
+      <tr data-cost="insurance" data-unit="SGD"><th scope="row"><details><summary>Travel insurance</summary><p>Allowance for two Singapore-issued policies with appropriate winter sport and heli-hike cover. Confirm the activities with the insurer before buying.</p></details></th><td><data value="350">S$350</data></td><td><data value="550">S$550</data></td></tr>
+      <tr data-cost="extras" data-unit="SGD"><th scope="row"><details><summary>Mobile data, transfers and gifts</summary><p>Singapore airport transfers, SIMs and personal spending for two.</p></details></th><td><data value="300">S$300</data></td><td><data value="600">S$600</data></td></tr>
+      <tr data-cost="reserve" data-unit="SGD"><th scope="row"><details><summary>Unallocated reserve</summary><p>Held for disruptions, extra transport or an unexpected night. Included in both forecasts.</p></details></th><td><data value="1000">S$1,000</data></td><td><data value="1500">S$1,500</data></td></tr>
+    </tbody></table>
+  </section>
+  <section id="activity-prices" aria-labelledby="prices-heading"><h2 id="prices-heading">Activity prices for two</h2>
+    <p class="section-copy">Operator prices checked 22 November 2026. August and September 2027 availability and most final prices still depend on your dates.</p>
+    <ul class="price-list">
+      <li><div><a href="https://tekaposprings.co.nz/our-prices/">Tekapo Springs hot pools</a><small>NZ$42 × 2</small></div><strong>NZ$84</strong></li>
+      <li><div><a href="https://www.darkskyproject.co.nz/experiences/the-summit-experience/">Mount John Summit Experience</a><small>NZ$239 × 2</small></div><strong>NZ$478</strong></li>
+      <li><div><a href="https://www.realnz.com/en/experiences/glowworm-caves/">Te Anau glowworm caves</a><small>From NZ$145 × 2</small></div><strong>NZ$290</strong></li>
+      <li><div><a href="https://www.realnz.com/en/experiences/day-cruises/milford-sound-day-trip-from-te-anau">Milford coach and cruise</a><small>From NZ$269 × 2</small></div><strong>NZ$538</strong></li>
+      <li><div><a href="https://shop.coronetpeak.co.nz/shop/product/70">Coronet Peak first-timer ski package</a><small>NZ$270 × 2</small></div><strong>NZ$540</strong></li>
+      <li><div><a href="https://www.onsen.co.nz/experiences/original-onsen-soak-only/">Original Onsen private soak</a><small>NZ$180 for one pool for two</small></div><strong>NZ$180</strong></li>
+      <li><div><a href="https://www.franzjosephglacier.com/choose-your-experience/glacier-heli-hike/">Franz Josef glacier heli-hike</a><small>NZ$899 × 2 · valid through 30 Sep 2027</small></div><strong>NZ$1,798</strong></li>
+      <li><div><a href="https://www.blackcat.co.nz/akaroa-harbour-nature-cruise/">Akaroa nature cruise</a><small>NZ$130 × 2</small></div><strong>NZ$260</strong></li>
+    </ul>
+    <p class="method">The planning rates allow for currency movement and card costs. For context, NZ$1 was about S$0.706 on 20 November 2026. <a href="https://www.mtfxgroup.com/tools/historical-currency-exchange-rates/nzd-to-sgd-rate/">Exchange-rate history</a>.</p>
+  </section>
+</main>
+</body>
+</html>

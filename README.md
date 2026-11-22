@@ -7,6 +7,7 @@ A 14-day self-drive honeymoon from Singapore to Aotearoa (24 Aug – 7 Sep 2027)
 | Page | What it is |
 |---|---|
 | [Summary](https://seaboiii.github.io/our_honeymoon/) | Route map, where we sleep, and things to do, food and stays for every day, plus booking plan, halal guide and checklist |
+| [Budget](https://seaboiii.github.io/our_honeymoon/budget/) | Combined airfare and budget, two spending forecasts, and prices for eight activities. Edits stay in the visitor’s browser. |
 | [3D vlog](https://seaboiii.github.io/our_honeymoon/3d/) | Day-by-day visits to the South Island landmarks, with short travel scenes. |
 | [3D vlog, Claude cut](https://seaboiii.github.io/our_honeymoon/claude-cut/) | The same trip with its own terrain treatment and the same detailed vehicles and landmarks, plus shadows, ripples on the sea and topographic contours |
 
@@ -55,6 +56,7 @@ sh build_site.sh
 # With docs served locally and playwright-core on the Node module path:
 ATLAS_URL=http://127.0.0.1:8796 node map3d/tools/verify_playback.cjs
 ATLAS_URL=http://127.0.0.1:8796 node map3d/tools/verify_journal.cjs
+ATLAS_URL=http://127.0.0.1:8796 node map3d/tools/verify_budget.cjs
 ATLAS_URL=http://127.0.0.1:8796 node map3d/tools/verify_activity_scenes.cjs
 ```
 

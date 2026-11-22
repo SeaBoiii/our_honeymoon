@@ -817,7 +817,7 @@ body > footer {
   .mast nav {
     gap: 15px;
   }
-  .mast nav a[href="#route"] {
+  .mast nav a[href$="#route"] {
     display: none;
   }
   .cover-inner {
@@ -1048,6 +1048,12 @@ body > footer {
   }
   .plate-caption b {
     font-size: 1.1rem;
+  }
+}
+@media (max-width: 400px) {
+  .mast .wrap {
+    padding-inline: 8px;
+    gap: 6px;
   }
 }
 @media (max-width: 355px) {
