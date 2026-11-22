@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "project": {
+    "name": "our_honeymoon",
+    "productType": "Travel itinerary",
+    "stack": [
+      "Static HTML",
+      "CSS",
+      "Three.js"
+    ]
+  },
+  "sources": {
+    "tokens": [],
+    "components": [],
+    "assets": [],
+    "instructions": []
+  },
+  "design": {
+    "colorMode": "system",
+    "colors": {
+      "paper": "#faf8ef",
+      "forest": "#194d3e",
+      "lake": "#205e64"
+    },
+    "typography": {
+      "display": "DM Serif Text",
+      "body": "DM Sans"
+    },
+    "spacing": {},
+    "radius": {},
+    "shadows": {},
+    "motion": {},
+    "density": "unknown"
+  },
+  "components": {
+    "installed": [],
+    "preferredPrimitives": [],
+    "patterns": []
+  },
+  "constraints": {
+    "must": [],
+    "avoid": []
+  },
+  "decisions": [
+    "Open the written journal with the day picker. Illustrate Tekapo, Wānaka, Milford Sound, the Shotover Onsen and Franz Josef. Link activities to their scenes and island pins to the relevant days. Keep full driving playback in the map."
+  ],
+  "evidence": [],
+  "generatedAt": "2026-11-22T01:15:56.526Z"
+}

@@ -27,8 +27,8 @@ def path(coords, close=False, step=1):
     return d + (' Z' if close else '')
 
 
-out = ['<svg viewBox="0 0 %d %d" role="img" aria-labelledby="mapT" class="routemap">' % (W, H),
-       '<title id="mapT">Route map: the honeymoon loop on New Zealand\'s South Island</title>']
+out = ['<svg viewBox="0 0 %d %d" role="group" aria-labelledby="mapT" class="routemap">' % (W, H),
+       '<title id="mapT">Choose an itinerary day on the South Island map</title>']
 for land in coast['land']:
     if land['name'] == 'NorthIslandHint':
         continue
@@ -43,10 +43,16 @@ out.append('<path class="coach" d="%s"/>' % path([(p[1], p[0]) for p in routes['
 stops = [('Christchurch', 172.60, -43.531, 'e'), ('Lake Tekapo', 170.48, -44.005, 'e'), ('Aoraki/Mt Cook', 170.096, -43.735, 'w'),
          ('Wānaka', 169.135, -44.70, 'e'), ('Te Anau', 167.718, -45.414, 'w'), ('Queenstown', 168.662, -45.031, 'e'),
          ('Franz Josef', 170.183, -43.387, 'w'), ('Milford Sound', 167.926, -44.672, 'w'), ('Akaroa', 172.968, -43.804, 'e')]
+targets = {'Christchurch':'base-christchurch', 'Lake Tekapo':'trip-day-2', 'Aoraki/Mt Cook':'trip-day-3',
+           'Wānaka':'trip-day-4', 'Te Anau':'base-te-anau', 'Queenstown':'base-queenstown',
+           'Franz Josef':'base-franz-josef', 'Milford Sound':'trip-day-6', 'Akaroa':'trip-day-13'}
 for name, lon, lat, side in stops:
     x, y = pt(lon, lat)
     dx, anchor = (9, 'start') if side == 'e' else (-9, 'end')
-    out.append('<circle class="stop" cx="%.1f" cy="%.1f" r="5"/><text x="%.1f" y="%.1f" text-anchor="%s">%s</text>' % (x, y, x + dx, y + 4, anchor, name))
+    out.append(f'<a class="map-stop" href="#{targets[name]}" aria-label="{name} itinerary">'
+               f'<circle class="hit" cx="{x:.1f}" cy="{y:.1f}" r="19"/>'
+               f'<circle class="stop" cx="{x:.1f}" cy="{y:.1f}" r="5"/>'
+               f'<text x="{x+dx:.1f}" y="{y+4:.1f}" text-anchor="{anchor}">{name}</text></a>')
 out.append('</svg>')
 (ROOT / 'tools/route_map.svg').write_text('\n'.join(out), encoding='utf-8')
 print('wrote route_map.svg', int(W), 'x', int(H), sum(len(s) for s in out), 'bytes')

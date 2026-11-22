@@ -113,7 +113,7 @@ body.rolling #rec i{opacity:1;animation:blink 1.2s steps(2) infinite}
 
   <aside id="side" class="glass" data-open="false">
     <header>
-      <div><span class="sub">24 Aug – 7 Sep 2027</span><h1>The South Island loop</h1><a class="itin" href="https://claude.ai/artifact/U9TV22y5gkKzKZtULwJ8xp" target="_blank" rel="noopener">← Itinerary and stays</a> <a class="itin tour-switch" id="tour-switch" href="?tour=drive">Full driving tour</a></div>
+      <div><span class="sub">24 Aug – 7 Sep 2027</span><h1>The South Island loop</h1><a class="itin" id="journal-back" href="https://claude.ai/artifact/U9TV22y5gkKzKZtULwJ8xp#days" target="_blank" rel="noopener">← Itinerary and stays</a> <a class="itin tour-switch" id="tour-switch" href="?tour=drive">Full driving tour</a></div>
       <button class="btn" id="toggle" aria-expanded="false" aria-controls="days">Days</button>
     </header>
     <label class="landmark-picker"><select id="places" aria-label="Explore a 3D landmark" disabled><option value="">Explore a landmark…</option></select></label>
@@ -141,7 +141,16 @@ body.rolling #rec i{opacity:1;animation:blink 1.2s steps(2) infinite}
     <button class="btn" id="speed" aria-label="Playback speed">1×</button>
     <button class="btn" id="follow" aria-pressed="true">Follow</button>
     <button class="btn" id="overview">Route</button>
+    <button type="button" class="btn" id="options-toggle" aria-expanded="false" aria-controls="map-options">More</button>
   </div>
+  <aside class="glass" id="map-options" aria-label="Map options" tabindex="-1" hidden>
+    <h2>Map options</h2>
+    <div id="option-links"></div>
+    <label class="activity-picker">Go to an activity<select id="activity-picker"><option value="">Choose a scene…</option></select></label>
+    <div id="option-places"></div>
+    <div id="option-playback" aria-label="Playback controls"></div>
+    <div id="option-notes"></div>
+  </aside>
   <div id="status" role="status" class="glass">Loading the map…</div>
   <noscript><p class="glass" style="position:absolute;inset:25% 10% auto;padding:20px;z-index:8">Enable JavaScript to explore the map, or <a href="https://claude.ai/artifact/U9TV22y5gkKzKZtULwJ8xp">read the itinerary</a>.</p></noscript>
 </div>
@@ -153,6 +162,8 @@ body.rolling #rec i{opacity:1;animation:blink 1.2s steps(2) infinite}
 <script src="../atlas/scenery.js"></script>
 <script src="../atlas/journey.js"></script>
 <script src="../atlas/itinerary.js"></script>
+<script src="../atlas/map-panels.js"></script>
+<script src="../atlas/evening-views.js"></script>
 <script src="../atlas/landscape.js"></script>
 <script src="../atlas/assets.js"></script>
 <script src="../atlas/miniatures.js"></script>
@@ -280,6 +291,8 @@ function gcPath(a,b,n){const va=gv(a[0],a[1],1).normalize(),vb=gv(b[0],b[1],1).n
 // South Island diorama
 const scene=new THREE.Scene();
 const DAY=new THREE.Color('#d4e5de'),NIGHT=new THREE.Color('#0b1430'),skyCol=DAY.clone();
+const eveningSky=makeEveningSky();scene.add(eveningSky);
+const renderEvening=createEveningViews(canvas,controls);
 scene.background=skyCol;scene.fog=new THREE.FogExp2(skyCol,.0035);
 const hemi=new THREE.HemisphereLight('#f1f6ef','#6f785d',.9);scene.add(hemi);
 const sun=new THREE.DirectionalLight('#fff1dc',1.1);sun.position.set(-32,24,14);scene.add(sun);
@@ -371,6 +384,9 @@ const fullDrive=fullDriveRequested(),tourSwitch=$('tour-switch');
 $('app').classList.toggle('itinerary-tour',!fullDrive);
 tourSwitch.textContent=fullDrive?'Itinerary highlights':'Full driving tour';
 function linkOtherTour(day){
+  const journal=$('journal-back');
+  journal.hash=day>=0?'trip-day-'+day:'days';
+  journal.textContent=day>0?'← Day '+day+' itinerary':day===0?'← Departure itinerary':'← Written itinerary';
   const url=new URL(location.href);url.searchParams.set('tour',fullDrive?'itinerary':'drive');
   url.hash=day>=0?'day-'+day:'';tourSwitch.href=url.href;
 }
@@ -518,9 +534,7 @@ $('overview').onclick=()=>{if(legs.length)showRoute();};
 $('prev').onclick=()=>jumpDay(Math.max(0,(curDay<0?0:curDay)-1));
 $('next').onclick=()=>jumpDay(Math.min(14,(curDay<0?0:curDay)+1));
 $('scrub').oninput=e=>{if(!legs.length)return;leaveStudio();$('app').classList.remove('atlas-overview');if(!started)markFollow(true);started=true;t=TOTAL*e.target.value/1000;curLeg=-1;};
-$('toggle').onclick=()=>{const s=$('side'),o=s.dataset.open!=='true';s.dataset.open=String(o);$('toggle').setAttribute('aria-expanded',String(o));
-  if(o){const cur=daysEl.querySelector('[aria-current="true"]');if(cur)cur.scrollIntoView({block:'center'});}};
-function jumpDay(d){if(!legs.length)return;leaveStudio();$('app').classList.remove('atlas-overview');markFollow(true);if(!started){$('chapter').classList.remove('show');}started=true;const L=(!fullDrive&&legs.find(l=>l.day===d&&l.mode==='stay'))||legs.find(l=>l.day===d);if(L){t=L.start+.001;curLeg=-1;}}
+function jumpDay(d){if(!legs.length)return;leaveStudio();$('app').classList.remove('atlas-overview');markFollow(true);if(!started){$('chapter').classList.remove('show');}started=true;const L=(!fullDrive&&legs.find(l=>l.day===d&&l.mode==='stay'&&!l.directOnly))||legs.find(l=>l.day===d);if(L){t=L.start+.001;curLeg=-1;}}
 function setWorld(w){if(w===world)return;world=w;
   if(w==='globe'){controls.minDistance=1.6;controls.maxDistance=80;controls.maxPolarAngle=Math.PI;}
   else{controls.minDistance=.008;controls.maxDistance=320;controls.maxPolarAngle=Math.PI*.48;}
@@ -561,7 +575,8 @@ function snapCam(){
     camera.position.copy(p).addScaledVector(up,5.8).addScaledVector(side,-1.6);
   }else {
     const distance=followDistance(L);
-    const angle=L.site ? new THREE.Vector3(-.45,.50,.98) : new THREE.Vector3(-.45,.78,.78);
+    const shot=activityViews[L.id];
+    const angle=shot ? new THREE.Vector3(...shot.eye) : L.site ? new THREE.Vector3(-.45,.50,.98) : new THREE.Vector3(-.45,.78,.78);
     camera.position.copy(p).addScaledVector(angle.normalize(),distance);
     if(L.travel)chooseValleyView(terrainSurface,p,camera.position,distance);
   }
@@ -590,7 +605,7 @@ function followNZ(L,goal,dt,progress){
     const want=offset.clone().normalize().multiplyScalar(dist);
     want.y=Math.max(.62*dist,Math.min(want.y,.83*dist));
     offset.lerp(want.setLength(dist),1-Math.exp(-dt*2.2));
-  }else offset.applyAxisAngle(UP,dt*.095);
+  }else offset.applyAxisAngle(UP,dt*(activityViews[L.id]?.orbit ?? .095));
   camera.position.copy(target).add(offset);
 }
 
@@ -650,8 +665,13 @@ function frame(){
   const L=started?legs[curLeg]:null;
   if(follow&&L?.world==='nz'){
     const anchor=active?.visible?active.position:controls.target;
-    const minY=SurfaceTravel.cameraFloor(terrainSurface,anchor,camera.position,L.travel?.032:.006);
+    const minY=SurfaceTravel.cameraFloor(terrainSurface,anchor,camera.position,activityViews[L.id]?.clearance ?? (L.travel ? .032 : .006));
     if(camera.position.y<minY){camera.position.y=minY;camera.lookAt(controls.target);}
+  }
+  eveningSky.visible=world==='nz' && !!activityViews[L?.id]?.dusk;
+  if(eveningSky.visible){
+    eveningSky.position.copy(camera.position);
+    scene.fog.color.copy(eveningSky.material.uniforms.horizon.value);
   }
   if(L?.mode==='gfly'&&gPlane){
     // Globe and island have separate map scales. Preserve the airliner's silhouette on the globe.
@@ -665,7 +685,7 @@ function frame(){
 
   if(!started)$('locator').hidden=true;
   if(!started&&!needsDraw){requestAnimationFrame(frame);return;}
-  needsDraw=false;renderer.render(inspected?studio.scene:world==='globe'?gScene:scene,camera);
+  needsDraw=false;if(!renderEvening(renderer,follow&&!inspected?L?.id:null,playing,dt))renderer.render(inspected?studio.scene:world==='globe'?gScene:scene,camera);
   const w=canvas.clientWidth,h=canvas.clientHeight,camDir=camera.position.clone().normalize();
   const placed=[];
   const locator=$('locator');
@@ -675,7 +695,7 @@ function frame(){
     locator.style.left=(tmp.x+1)*w/2+'px';locator.style.top=(1-tmp.y)*h/2+'px';
     locator.hidden=tmp.z<-1||tmp.z>1||Math.abs(tmp.x)>1||Math.abs(tmp.y)>1;
   }
-  labelEls.forEach(l=>{let vis=!inspected&&l.world===world;
+  labelEls.forEach(l=>{let vis=!inspected&&l.world===world && !(follow&&L?.site&&viewDistance<1);
     if(vis){tmp.copy(l.v).project(camera);vis=tmp.z<1&&Math.abs(tmp.x)<1.1&&Math.abs(tmp.y)<1.1;
       if(vis)vis=tmp.z>=-1;
       if(vis&&world==='globe')vis=l.v.clone().normalize().dot(camDir)>.25;}
@@ -700,14 +720,15 @@ addEventListener('resize',resize);
   const names=['terrain_south_island','car','coach','helicopter','boat','plane','church_stone','observatory','lone_tree','hot_tub','mosque','city','glowworm_cave','ski_lift','glacier_ice','sheep','pin','hooker_valley'];
   const detailed=new Set(['car','coach','boat','helicopter','plane','church_stone','observatory','lone_tree','hot_tub','mosque','city','glowworm_cave','ski_lift','glacier_ice','sheep']);
   const canonical='web_assets/';
-  const [routes,cruises,dimensions,scenes,roadside,sheepLOD,settlements]=await Promise.all([
+  const [routes,cruises,dimensions,scenes,roadside,sheepLOD,settlements,riverLines]=await Promise.all([
     fetch('web_assets/routes.json').then(r=>r.json()).catch(()=>null),
     fetch('../atlas/cruises.json').then(r=>r.json()).catch(()=>null),
     fetch('../atlas/vehicle-dimensions.json').then(r=>r.json()),
     Promise.all(names.map(n=>load(n,detailed.has(n)?canonical:'web_assets/'))),
     new THREE.GLTFLoader().loadAsync('../atlas/roadside.glb').then(g=>g.scene).catch(()=>new THREE.Group()),
     load('sheep','../atlas/distant/'),
-    fetch('../atlas/settlements.json').then(r=>r.json()).catch(()=>({areas:[],streets:[],buildings:[]}))
+    fetch('../atlas/settlements.json').then(r=>r.json()).catch(()=>({areas:[],streets:[],buildings:[]})),
+    fullDrive?[]:fetch('../atlas/shotover.json').then(r=>r.json()).catch(()=>[])
   ]);
   fleet={...dimensions,mapUnitsPerMetre:fullDrive?dimensions.mapUnitsPerMetre:dimensions.itineraryUnitsPerMetre};
   for(const [mode,spec] of Object.entries(fleet.vehicles))MODE[mode].len=spec.length*fleet.mapUnitsPerMetre;
@@ -721,6 +742,7 @@ addEventListener('resize',resize);
     v.userData.wheels=[];v.traverse(o=>{if(/^Wheel_(LF|RF|LR|RR)$/.test(o.name))v.userData.wheels.push(o);if(o.name==='Rotor')v.userData.rotor=o;if(o.name==='TailRotor')v.userData.tail=o;});});
   gPlane=makeVehicle(A.plane,fleet,'plane');
   gPlane.visible=false;gScene.add(gPlane);
+  if(riverLines.length)addShotoverRiver(riverLines,scene,P,terrainSurface);
   landmarkSites=placeTourLandmarks(fit,A,scene,P,terrainSurface,lakeSurface,H,fleet.mapUnitsPerMetre,fullDrive,false);
   buildTimeline();
   routeLegs=legs.slice();
@@ -747,7 +769,22 @@ addEventListener('resize',resize);
   if(!A.terrain_south_island){$('status').hidden=false;$('status').textContent='Terrain could not load. Reload to try again.';}
   showRoute();
   // deep links from the summary page: #day-0 … #day-14
+  setupMapPanels(buildItinerary(routeLegs,landmarkSites,P,terrainSurface,lakeSurface,'all'));
   const fromHash=()=>{
+    const activity=/^#scene-([a-z0-9-]+)$/.exec(location.hash);
+    if(activity){
+      if(fullDrive){
+        const url=new URL(location.href);url.searchParams.set('tour','itinerary');location.replace(url);return;
+      }
+      const scenes=buildItinerary(routeLegs,landmarkSites,P,terrainSurface,lakeSurface,activity[1]);
+      const selected=scenes.find(l=>l.id===activity[1]);
+      if(selected){
+        legs.splice(0,legs.length,...scenes);TOTAL=legs.at(-1).start+legs.at(-1).dur;
+        jumpDay(selected.day);showDay(selected.day);setPlaying(false);
+        t=selected.start+.001;night=selected.night||0;
+        $('chapter').classList.remove('show');return;
+      }
+    }
     if(!fullDrive&&location.hash.startsWith('#leg-')){
       const url=new URL(location.href);url.searchParams.set('tour','drive');location.replace(url.href);return;
     }
